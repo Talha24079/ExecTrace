@@ -23,23 +23,25 @@ int main()
     {
         cout << "Received Log Request" << endl;
         
-        if (req.has_param("id"))
+        if (req.has_param("func"))
         {
-            int id = stoi(req.get_param_value("id"));
             string func = req.get_param_value("func");
             string msg = req.get_param_value("msg");
             uint64_t dur = stoull(req.get_param_value("duration"));
             uint64_t ram = stoull(req.get_param_value("ram"));
             uint64_t rom = stoull(req.get_param_value("rom"));
 
-            db->log_event(id, func.c_str(), msg.c_str(), dur, ram, rom);
-            res.set_content("{\"result\": \"saved\"}", "application/json");
+            int new_id = db->log_event(func.c_str(), msg.c_str(), dur, ram, rom);
+            
+            cout << "Generated ID: " << new_id << endl;
+            res.set_content("{\"result\": \"saved\", \"id\": " + to_string(new_id) + "}", "application/json");
         }
         else
         {
-            res.set_content("{\"result\": \"error\", \"msg\": \"missing params\"}", "application/json");
+            res.set_content("{\"result\": \"error\", \"msg\": \"missing func param\"}", "application/json");
         }
     });
+
     // QUERY BY ID RANGE
     svr.Get("/query", [](const httplib::Request& req, httplib::Response& res)
     {
