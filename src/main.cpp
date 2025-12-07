@@ -1,24 +1,31 @@
 #include <iostream>
-#include "btree/Node.hpp"
+#include <cstring> 
+#include "btree/DiskManager.hpp"
 
 using namespace std;
 
 int main() {
-    cout << "--- B-Tree Project Test ---" << endl;
+    cout << "--- Disk Manager Test ---" << endl;
 
-    Node myNode(1, true);
+    string db_file = "test.db";
+    DiskManager dm(db_file);
 
-    myNode.keys.push_back(50);
-    myNode.keys.push_back(30);
-    myNode.keys.push_back(10);
+    char buffer[PAGE_SIZE];
+    
+    memset(buffer, 0, PAGE_SIZE);
 
-    myNode.print_node();
+    string message = "Hello, this is saved on disk!";
+    strcpy(buffer, message.c_str());
 
-    if (myNode.keys.size() <= (2 * DEGREE - 1)) {
-        cout << "Node size is within limit." << endl;
-    } else {
-        cout << "Node overflow!" << endl;
-    }
+    cout << "Writing to Page 0..." << endl;
+    dm.write_page(0, buffer);
+
+    memset(buffer, 0, PAGE_SIZE);
+
+    cout << "Reading from Page 0..." << endl;
+    dm.read_page(0, buffer);
+
+    cout << "Data read: " << buffer << endl;
 
     return 0;
 }

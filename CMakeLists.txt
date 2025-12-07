@@ -17,4 +17,4 @@ set(SOURCES
 )
 
 # Create the executable
-add_executable(ExecTrace ${SOURCES})
+add_executable(ExecTrace src/main.cpp src/btree/DiskManager.cpp)
