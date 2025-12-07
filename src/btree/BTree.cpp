@@ -181,3 +181,73 @@ void BTree::print_tree(int page_id, int level)
         }
     }
 }
+
+bool BTree::search(int key, int page_id) 
+{
+    if (page_id == -1) 
+        page_id = root_page_id;
+
+    char buffer[PAGE_SIZE];
+    dm->read_page(page_id, buffer);
+    Node node(page_id, true);
+    node.deserialize(buffer);
+
+    int i = 0;
+    while (i < node.keys.size() && key > node.keys[i]) 
+    {
+        i++;
+    }
+
+    if (i < node.keys.size() && key == node.keys[i]) 
+        return true;
+
+    if (node.is_leaf) 
+        return false;
+
+    return search(key, node.children[i]);
+}
+
+vector<int> BTree::range_search(int start_key, int end_key, int page_id)
+ {
+    if (page_id == -1) 
+    page_id = root_page_id;
+
+    vector<int> results;
+    char buffer[PAGE_SIZE];
+    dm->read_page(page_id, buffer);
+    Node node(page_id, true);
+    node.deserialize(buffer);
+
+    int i = 0;
+    
+    if (!node.is_leaf) 
+    {
+        for (i = 0; i < node.keys.size(); i++) 
+        {
+            if (start_key <= node.keys[i]) 
+            {
+                vector<int> child_res = range_search(start_key, end_key, node.children[i]);
+                results.insert(results.end(), child_res.begin(), child_res.end());
+            }
+            
+            if (node.keys[i] >= start_key && node.keys[i] <= end_key) 
+                results.push_back(node.keys[i]);
+        }
+
+        if (end_key >= node.keys[i-1]) 
+        {
+             vector<int> child_res = range_search(start_key, end_key, node.children[i]);
+             results.insert(results.end(), child_res.begin(), child_res.end());
+        }
+    } 
+    else 
+    {
+        
+        for (int k : node.keys) 
+        {
+            if (k >= start_key && k <= end_key)
+                results.push_back(k);
+        }
+    }
+    return results;
+}

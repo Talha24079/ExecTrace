@@ -19,6 +19,10 @@ public:
 
     // Main insert function
     void insert(int key);
+
+    // Search functions
+    bool search(int key, int page_id = -1);
+    vector<int> range_search(int start_key, int end_key, int page_id = -1);
     
     // Debug helper
     void print_tree(int page_id = -1, int level = 0);

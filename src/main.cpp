@@ -1,31 +1,34 @@
 #include <iostream>
-#include "../include/btree/DiskManager.hpp"
-#include "../include/btree/BTree.hpp"
+#include <vector>
+#include "btree/DiskManager.hpp"
+#include "btree/BTree.hpp"
 
 using namespace std;
 
 int main() {
-    cout << "--- B-Tree Insertion Test ---" << endl;
-
-    remove("btree.db"); 
-
+    cout << "--- B-Tree Query Test ---" << endl;
+    
     DiskManager dm("btree.db");
     BTree tree(&dm);
 
-    cout << "Inserting keys 10 to 200..." << endl;
-    for (int i = 1; i <= 20; i++) 
-    {
-        int key = i * 10;
-        tree.insert(key);
-        cout << "Inserted " << key << endl;
-    }
+    cout << "\n1. Testing Search:" << endl;
+    int search_target = 180;
+    if (tree.search(search_target)) 
+        cout << "Found key " << search_target << "!" << endl;
+    else
+        cout << "Key " << search_target << " NOT found (Error)." << endl;
 
-    cout << "\n--- Final Tree Structure ---" << endl;
-    tree.print_tree();
+    int missing_target = 999;
+    if (!tree.search(missing_target))
+        cout << "Correctly failed to find " << missing_target << "." << endl;
 
-    tree.insert(210);
-    cout << "\nInserted 210\n";
-    tree.print_tree();
+    cout << "\n2. Testing Range Query (65 to 115):" << endl;
+    vector<int> range_results = tree.range_search(65, 115);
+    
+    cout << "Results: ";
+    for (int k : range_results) 
+        cout << k << " ";
+    cout << endl;
 
     return 0;
 }
