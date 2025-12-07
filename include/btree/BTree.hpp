@@ -13,12 +13,23 @@ private:
     // helper to insert into a node
     void insert_non_full(int page_id, int key);
 
+    void _remove(int page_id, int key);        
+    int get_predecessor(int page_id);          
+    int get_successor(int page_id);            
+    void fill(int page_id, int idx);           
+    void borrow_from_prev(int page_id, int idx);
+    void borrow_from_next(int page_id, int idx);
+    void merge(int page_id, int idx);
+
 public:
     // Constructor
     BTree(DiskManager* disk_manager);
 
     // Main insert function
     void insert(int key);
+
+    // Main delete function
+    void remove(int key);
 
     // Search functions
     bool search(int key, int page_id = -1);

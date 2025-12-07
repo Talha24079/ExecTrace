@@ -161,23 +161,23 @@ void BTree::print_tree(int page_id, int level)
 
     char buffer[PAGE_SIZE];
     dm->read_page(page_id, buffer);
-    Node node(page_id, false);
+    Node node(page_id, true);
     node.deserialize(buffer);
 
-    for (int i = 0; i < level; i++) 
-        cout << "  ";
+    string indent(level * 4, ' ');
 
-    cout << "Page " << page_id << ": ";
-
+    cout << indent << "Page " << page_id << " [" << (node.is_leaf ? "LEAF" : "INTERNAL") << "] Keys: ";
     for (int k : node.keys) 
+    {
         cout << k << " ";
+    }
     cout << endl;
 
     if (!node.is_leaf) 
     {
-        for (int child : node.children) 
+        for (int child_id : node.children) 
         {
-            print_tree(child, level + 1);
+            print_tree(child_id, level + 1);
         }
     }
 }
@@ -250,4 +250,294 @@ vector<int> BTree::range_search(int start_key, int end_key, int page_id)
         }
     }
     return results;
+}
+
+void BTree::remove(int key) 
+{
+    if (root_page_id == -1) 
+    {
+        cout << "The tree is empty\n";
+        return;
+    }
+
+    _remove(root_page_id, key);
+
+    char buffer[PAGE_SIZE];
+    dm->read_page(root_page_id, buffer);
+    Node root(root_page_id, true); 
+    root.deserialize(buffer);
+
+    if (root.keys.empty()) 
+    {
+        if (root.is_leaf) 
+            root_page_id = -1;
+        else
+            root_page_id = root.children[0];
+    }
+}
+
+int BTree::get_predecessor(int page_id) 
+{
+    int curr_id = page_id;
+    while (true) 
+    {
+        char buffer[PAGE_SIZE];
+        dm->read_page(curr_id, buffer);
+        Node node(curr_id, true); 
+        node.deserialize(buffer);
+
+        if (node.is_leaf)
+            return node.keys.back(); 
+        curr_id = node.children.back(); 
+    }
+}
+
+int BTree::get_successor(int page_id) 
+{
+    int curr_id = page_id;
+    while (true) 
+    {
+        char buffer[PAGE_SIZE];
+        dm->read_page(curr_id, buffer);
+        Node node(curr_id, true);
+        node.deserialize(buffer);
+
+        if (node.is_leaf) 
+            return node.keys.front();
+        curr_id = node.children.front(); 
+    }
+}
+
+void BTree::_remove(int page_id, int key) 
+{
+    char buffer[PAGE_SIZE];
+    dm->read_page(page_id, buffer);
+    Node node(page_id, true); 
+    node.deserialize(buffer);
+
+    int idx = 0;
+    while (idx < node.keys.size() && node.keys[idx] < key)
+        idx++;
+
+    if (idx < node.keys.size() && node.keys[idx] == key) 
+    {
+        
+        if (node.is_leaf) 
+        {
+            node.keys.erase(node.keys.begin() + idx);
+            node.serialize(buffer);
+            dm->write_page(page_id, buffer);
+        } 
+        else 
+        {
+            int left_child_id = node.children[idx];
+            char left_buf[PAGE_SIZE];
+            dm->read_page(left_child_id, left_buf);
+            Node left_child(left_child_id, true); left_child.deserialize(left_buf);
+
+            if (left_child.keys.size() >= DEGREE) {
+                int pred = get_predecessor(node.children[idx]);
+                node.keys[idx] = pred;
+                node.serialize(buffer);
+                dm->write_page(page_id, buffer);
+                _remove(node.children[idx], pred); 
+            } 
+            else {
+                int right_child_id = node.children[idx + 1];
+                char right_buf[PAGE_SIZE];
+                dm->read_page(right_child_id, right_buf);
+                Node right_child(right_child_id, true); right_child.deserialize(right_buf);
+
+                if (right_child.keys.size() >= DEGREE) {
+                    int succ = get_successor(node.children[idx + 1]);
+                    node.keys[idx] = succ;
+                    node.serialize(buffer);
+                    dm->write_page(page_id, buffer);
+                    _remove(node.children[idx + 1], succ);
+                } 
+                else 
+                {
+                    merge(page_id, idx);
+                    _remove(node.children[idx], key);
+                }
+            }
+        }
+    } 
+    else {
+        if (node.is_leaf) 
+        {
+            std::cout << "The key " << key << " does not exist in the tree\n";
+            return;
+        }
+
+        bool flag = (idx == node.keys.size());
+
+        int child_id = node.children[idx];
+        char child_buf[PAGE_SIZE];
+        dm->read_page(child_id, child_buf);
+        Node child_check(child_id, true); child_check.deserialize(child_buf);
+
+        if (child_check.keys.size() < DEGREE) 
+        {
+            fill(page_id, idx);
+            
+            dm->read_page(page_id, buffer);
+            node.deserialize(buffer);
+        }
+
+        if (flag && idx > node.keys.size()) 
+            _remove(node.children[idx - 1], key);
+        else
+            _remove(node.children[idx], key);
+    }
+}
+
+
+void BTree::fill(int page_id, int idx) 
+{
+    char p_buf[PAGE_SIZE];
+    dm->read_page(page_id, p_buf);
+    Node parent(page_id, false);
+    parent.deserialize(p_buf);
+
+    if (idx != 0) 
+    {
+        int sibling_id = parent.children[idx - 1];
+        char s_buf[PAGE_SIZE];
+        dm->read_page(sibling_id, s_buf);
+        Node sibling(sibling_id, true); sibling.deserialize(s_buf);
+        
+        if (sibling.keys.size() >= DEGREE) 
+        {
+            borrow_from_prev(page_id, idx);
+            return;
+        }
+    }
+
+    if (idx != parent.keys.size()) 
+    {
+        int sibling_id = parent.children[idx + 1];
+        char s_buf[PAGE_SIZE];
+        dm->read_page(sibling_id, s_buf);
+        Node sibling(sibling_id, true); sibling.deserialize(s_buf);
+
+        if (sibling.keys.size() >= DEGREE) 
+        {
+            borrow_from_next(page_id, idx);
+            return;
+        }
+    }
+
+    if (idx != parent.keys.size())
+        merge(page_id, idx); 
+    else 
+        merge(page_id, idx - 1); 
+}
+
+void BTree::borrow_from_prev(int page_id, int idx) 
+{
+    char p_buf[PAGE_SIZE];
+    dm->read_page(page_id, p_buf);
+    Node parent(page_id, false);
+    parent.deserialize(p_buf);
+
+    int child_id = parent.children[idx];
+    int sibling_id = parent.children[idx - 1];
+
+    char c_buf[PAGE_SIZE], s_buf[PAGE_SIZE];
+    dm->read_page(child_id, c_buf);
+    dm->read_page(sibling_id, s_buf);
+    Node child(child_id, true); child.deserialize(c_buf);
+    Node sibling(sibling_id, true); sibling.deserialize(s_buf);
+
+    if (!child.children.empty()) 
+        child.is_leaf = false;
+    if (!sibling.children.empty()) 
+        sibling.is_leaf = false;
+
+    child.keys.insert(child.keys.begin(), parent.keys[idx - 1]);
+    
+    if (!child.is_leaf)
+        child.children.insert(child.children.begin(), sibling.children.back());
+
+    parent.keys[idx - 1] = sibling.keys.back();
+
+    sibling.keys.pop_back();
+    if (!sibling.is_leaf) 
+        sibling.children.pop_back();
+
+    char buf[PAGE_SIZE];
+    parent.serialize(buf); dm->write_page(page_id, buf);
+    child.serialize(buf); dm->write_page(child_id, buf);
+    sibling.serialize(buf); dm->write_page(sibling_id, buf);
+}
+
+void BTree::borrow_from_next(int page_id, int idx) 
+{
+    char p_buf[PAGE_SIZE];
+    dm->read_page(page_id, p_buf);
+    Node parent(page_id, false);
+    parent.deserialize(p_buf);
+
+    int child_id = parent.children[idx];
+    int sibling_id = parent.children[idx + 1];
+
+    char c_buf[PAGE_SIZE], s_buf[PAGE_SIZE];
+    dm->read_page(child_id, c_buf);
+    dm->read_page(sibling_id, s_buf);
+    Node child(child_id, true); child.deserialize(c_buf);
+    Node sibling(sibling_id, true); sibling.deserialize(s_buf);
+
+    if (!child.children.empty()) child.is_leaf = false;
+    if (!sibling.children.empty()) sibling.is_leaf = false;
+
+    child.keys.push_back(parent.keys[idx]);
+
+    if (!child.is_leaf) 
+        child.children.push_back(sibling.children[0]);
+
+    parent.keys[idx] = sibling.keys[0];
+
+    sibling.keys.erase(sibling.keys.begin());
+    if (!sibling.is_leaf) 
+        sibling.children.erase(sibling.children.begin());
+
+    char buf[PAGE_SIZE];
+    parent.serialize(buf); dm->write_page(page_id, buf);
+    child.serialize(buf); dm->write_page(child_id, buf);
+    sibling.serialize(buf); dm->write_page(sibling_id, buf);
+}
+
+void BTree::merge(int page_id, int idx) 
+{
+    char p_buf[PAGE_SIZE];
+    dm->read_page(page_id, p_buf);
+    Node parent(page_id, false);
+    parent.deserialize(p_buf);
+
+    int child_id = parent.children[idx];
+    int sibling_id = parent.children[idx + 1];
+
+    char c_buf[PAGE_SIZE], s_buf[PAGE_SIZE];
+    dm->read_page(child_id, c_buf);
+    dm->read_page(sibling_id, s_buf);
+    Node child(child_id, true); child.deserialize(c_buf);
+    Node sibling(sibling_id, true); sibling.deserialize(s_buf);
+
+    if (!child.children.empty()) child.is_leaf = false;
+    if (!sibling.children.empty()) sibling.is_leaf = false;
+
+    child.keys.push_back(parent.keys[idx]);
+
+    for (int k : sibling.keys) child.keys.push_back(k);
+
+    if (!child.is_leaf)
+        for (int c : sibling.children) child.children.push_back(c);
+
+    parent.keys.erase(parent.keys.begin() + idx);
+    parent.children.erase(parent.children.begin() + idx + 1);
+
+    char buf[PAGE_SIZE];
+    parent.serialize(buf); dm->write_page(page_id, buf);
+    child.serialize(buf); dm->write_page(child_id, buf);
 }
