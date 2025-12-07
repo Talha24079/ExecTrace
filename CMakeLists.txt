@@ -1,20 +1,24 @@
 cmake_minimum_required(VERSION 3.10)
 
-# Project Name and Version
 project(ExecTrace VERSION 0.1 LANGUAGES CXX)
 
-# Enforce C++ 20 Standard
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
 
-# Add our header directory to the include path
 include_directories(include)
 
-# Define the source files
-set(SOURCES
-    src/main.cpp
-)
+find_package(Threads REQUIRED)
 
-# Create the executable
-add_executable(ExecTrace src/main.cpp src/btree/DiskManager.cpp src/btree/BTree.cpp)
+add_executable(ExecTraceCLI 
+    src/main.cpp 
+    src/btree/BTree.cpp 
+    src/btree/DiskManager.cpp
+)
+target_link_libraries(ExecTraceCLI PRIVATE Threads::Threads)
+
+add_executable(ExecTraceServer 
+    src/server.cpp 
+    src/btree/BTree.cpp 
+    src/btree/DiskManager.cpp
+)
+target_link_libraries(ExecTraceServer PRIVATE Threads::Threads)
