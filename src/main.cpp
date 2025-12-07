@@ -1,50 +1,43 @@
 #include <iostream>
 #include <string>
-#include "btree/DiskManager.hpp"
-#include "btree/BTree.hpp"
+#include "btree/ExecTraceDB.hpp"
 
 using namespace std;
 
 int main()
 {
-    remove("real_trace.db");
+    // Clean up old files so we start fresh
+    remove("test_sys_main.db");
+    remove("test_sys_ram.db");
+    remove("test_sys_dur.db");
 
-    DiskManager dm("real_trace.db");
-    BTree tree(&dm);
+    cout << "--- Initializing Multi-Index DB ---" << endl;
+    ExecTraceDB db("test_sys");
 
-    cout << "--- Inserting Full Trace Data (RAM/ROM/Duration) ---" << endl;
+    cout << "--- Inserting Events ---" << endl;
+    // ID, Func, Msg, Duration, RAM, ROM
+    db.log_event(1, "func_fast", "ok",     10,   100, 0);
+    db.log_event(2, "func_slow", "heavy",  5000, 200, 0); // Slow!
+    db.log_event(3, "func_mid",  "normal", 150,  5000, 0); // High RAM!
+    db.log_event(4, "func_lag",  "laggy",  5000, 100, 0); // Slow!
 
-    for (int i = 1; i <= 20; i++)
-    {
-        TraceEntry t;
-        string msg = "function_call_" + to_string(i);
-        
-        // ID, Time, Process, Message, Duration, RAM, ROM
-        t.set(i * 10, "12:00:00", "core_system", msg.c_str(), 
-              i * 50,      // Duration (50, 100, 150...)
-              i * 1024,    // RAM (1KB, 2KB...)
-              50000);      // ROM (Fixed size)
-        
-        tree.insert(t);
-    }
-
-    cout << "--- Tree Structure ---" << endl;
-    tree.print_tree();
-
-    cout << "\n--- Verifying Data Integrity (ID 50) ---" << endl;
-    vector<TraceEntry> results = tree.range_search(50, 50);
+    cout << "\n--- Query 1: Find Slow Functions (> 1000ms) ---" << endl;
+    // This should find ID 2 and ID 4, even though their IDs are far apart.
+    // It works because the Duration Index sorts them together.
+    vector<TraceEntry> slow_logs = db.query_by_duration(1000, 6000);
     
-    if (!results.empty())
+    for(const auto& log : slow_logs)
     {
-        TraceEntry& res = results[0];
-        cout << "ID: " << res.id << endl;
-        cout << "Process: " << res.process_name << endl;
-        cout << "Duration: " << res.duration << " micros" << endl;
-        cout << "RAM Usage: " << res.ram_usage << " bytes" << endl;
+        cout << "FOUND: " << log.process_name << " (Time: " << log.duration << "ms)" << endl;
     }
-    else
+
+    cout << "\n--- Query 2: Find High RAM Usage (> 1000 bytes) ---" << endl;
+    // Should find ID 3
+    vector<TraceEntry> fat_logs = db.query_by_ram(1000, 10000);
+    
+    for(const auto& log : fat_logs)
     {
-        cout << "Error: ID 50 not found." << endl;
+        cout << "FOUND: " << log.process_name << " (RAM: " << log.ram_usage << " bytes)" << endl;
     }
 
     return 0;
