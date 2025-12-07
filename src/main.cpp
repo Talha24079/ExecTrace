@@ -1,50 +1,31 @@
 #include <iostream>
-#include <cstring>
-#include "btree/DiskManager.hpp"
-#include "btree/Node.hpp"
+#include "../include/btree/DiskManager.hpp"
+#include "../include/btree/BTree.hpp"
 
 using namespace std;
 
 int main() {
-    cout << "--- Serialization Test ---" << endl;
+    cout << "--- B-Tree Insertion Test ---" << endl;
 
-    string db_file = "btree.db";
-    DiskManager dm(db_file);
+    remove("btree.db"); 
 
-    cout << "1. Creating Node 0 (Root)..." << endl;
-    Node originalNode(0, true); 
-    originalNode.keys.push_back(100);
-    originalNode.keys.push_back(200);
-    originalNode.keys.push_back(300);
-    
-    cout << "Original Node:" << endl;
-    originalNode.print_node();
+    DiskManager dm("btree.db");
+    BTree tree(&dm);
 
-    char buffer[PAGE_SIZE];
-    memset(buffer, 0, PAGE_SIZE); 
-    originalNode.serialize(buffer);
-
-    dm.write_page(0, buffer);
-    cout << "2. Wrote Node 0 to disk." << endl;
-
-    char readBuffer[PAGE_SIZE];
-    memset(readBuffer, 0, PAGE_SIZE);
-    dm.read_page(0, readBuffer);
-
-    Node loadedNode(0, true); 
-    loadedNode.deserialize(readBuffer);
-
-    cout << "3. Loaded Node from disk:" << endl;
-    loadedNode.print_node();
-
-    if (loadedNode.keys == originalNode.keys) 
+    cout << "Inserting keys 10 to 200..." << endl;
+    for (int i = 1; i <= 20; i++) 
     {
-        cout << "SUCCESS: Data matches!" << endl;
-    } 
-    else 
-    {
-        cout << "FAILURE: Data does not match." << endl;
+        int key = i * 10;
+        tree.insert(key);
+        cout << "Inserted " << key << endl;
     }
+
+    cout << "\n--- Final Tree Structure ---" << endl;
+    tree.print_tree();
+
+    tree.insert(210);
+    cout << "\nInserted 210\n";
+    tree.print_tree();
 
     return 0;
 }
