@@ -1,31 +1,50 @@
 #include <iostream>
-#include <cstring> 
+#include <cstring>
 #include "btree/DiskManager.hpp"
+#include "btree/Node.hpp"
 
 using namespace std;
 
 int main() {
-    cout << "--- Disk Manager Test ---" << endl;
+    cout << "--- Serialization Test ---" << endl;
 
-    string db_file = "test.db";
+    string db_file = "btree.db";
     DiskManager dm(db_file);
 
-    char buffer[PAGE_SIZE];
+    cout << "1. Creating Node 0 (Root)..." << endl;
+    Node originalNode(0, true); 
+    originalNode.keys.push_back(100);
+    originalNode.keys.push_back(200);
+    originalNode.keys.push_back(300);
     
-    memset(buffer, 0, PAGE_SIZE);
+    cout << "Original Node:" << endl;
+    originalNode.print_node();
 
-    string message = "Hello, this is saved on disk!";
-    strcpy(buffer, message.c_str());
+    char buffer[PAGE_SIZE];
+    memset(buffer, 0, PAGE_SIZE); 
+    originalNode.serialize(buffer);
 
-    cout << "Writing to Page 0..." << endl;
     dm.write_page(0, buffer);
+    cout << "2. Wrote Node 0 to disk." << endl;
 
-    memset(buffer, 0, PAGE_SIZE);
+    char readBuffer[PAGE_SIZE];
+    memset(readBuffer, 0, PAGE_SIZE);
+    dm.read_page(0, readBuffer);
 
-    cout << "Reading from Page 0..." << endl;
-    dm.read_page(0, buffer);
+    Node loadedNode(0, true); 
+    loadedNode.deserialize(readBuffer);
 
-    cout << "Data read: " << buffer << endl;
+    cout << "3. Loaded Node from disk:" << endl;
+    loadedNode.print_node();
+
+    if (loadedNode.keys == originalNode.keys) 
+    {
+        cout << "SUCCESS: Data matches!" << endl;
+    } 
+    else 
+    {
+        cout << "FAILURE: Data does not match." << endl;
+    }
 
     return 0;
 }
