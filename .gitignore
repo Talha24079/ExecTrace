@@ -1,0 +1,20 @@
+# Build directories
+build/
+bin/
+lib/
+
+# IDE settings
+.vscode/
+.idea/
+
+# System files
+.DS_Store
+
+# Executables
+*.exe
+*.out
+
+# Database files (We don't want to commit our test DBs)
+*.dat
+*.db
+data/
