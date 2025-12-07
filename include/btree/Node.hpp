@@ -37,6 +37,10 @@ struct Node {
         }
 
         int num_children = children.size();
+        // write number of children explicitly
+        memcpy(data + off, &num_children, sizeof(int));
+        off += sizeof(int);
+
         for (int i = 0; i < num_children; i++) 
         {
             memcpy(data + off, &children[i], sizeof(int));
@@ -67,7 +71,10 @@ struct Node {
         children.clear();
         if (!is_leaf) 
         {
-            int num_children = num_keys + 1; 
+            int num_children = 0;
+            memcpy(&num_children, data + off, sizeof(int));
+            off += sizeof(int);
+
             for (int i = 0; i < num_children; i++) 
             {
                 int child_id;
