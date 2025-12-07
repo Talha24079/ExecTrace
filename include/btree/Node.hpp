@@ -3,14 +3,14 @@
 #include <iostream>
 #include <cstring> 
 #include "Types.hpp"
+#include "TraceEntry.hpp" // Include your new struct
 
 using namespace std;
 
 struct Node {
     int page_id;
     bool is_leaf;
-    
-    vector<int> keys;
+    vector<TraceEntry> entries; 
     vector<int> children;
 
     // Constructor
@@ -18,6 +18,7 @@ struct Node {
         page_id = id;
         is_leaf = leaf;
     }
+
     // Save to buffer 
     void serialize(char* data) 
     {
@@ -26,18 +27,17 @@ struct Node {
         memcpy(data + off, &is_leaf, sizeof(bool));
         off += sizeof(bool);
 
-        int num_keys = keys.size();
-        memcpy(data + off, &num_keys, sizeof(int));
+        int num_entries = entries.size();
+        memcpy(data + off, &num_entries, sizeof(int));
         off += sizeof(int);
 
-        for (int i = 0; i < num_keys; i++) 
+        for (int i = 0; i < num_entries; i++) 
         {
-            memcpy(data + off, &keys[i], sizeof(int));
-            off += sizeof(int);
+            memcpy(data + off, &entries[i], sizeof(TraceEntry));
+            off += sizeof(TraceEntry);
         }
 
         int num_children = children.size();
-        // write number of children explicitly
         memcpy(data + off, &num_children, sizeof(int));
         off += sizeof(int);
 
@@ -47,41 +47,37 @@ struct Node {
             off += sizeof(int);
         }
     }
-
-    // Load from buffer
-    void deserialize(char* data) {
+    void deserialize(char* data) 
+    {
         int off = 0;
 
         memcpy(&is_leaf, data + off, sizeof(bool));
         off += sizeof(bool);
 
-        int num_keys = 0;
-        memcpy(&num_keys, data + off, sizeof(int));
+        int num_entries = 0;
+        memcpy(&num_entries, data + off, sizeof(int));
         off += sizeof(int);
 
-        keys.clear(); 
-        for (int i = 0; i < num_keys; i++) 
+        entries.clear(); 
+        for (int i = 0; i < num_entries; i++) 
         {
-            int key;
-            memcpy(&key, data + off, sizeof(int));
-            keys.push_back(key);
-            off += sizeof(int);
+            TraceEntry entry;
+            memcpy(&entry, data + off, sizeof(TraceEntry));
+            entries.push_back(entry);
+            off += sizeof(TraceEntry);
         }
 
         children.clear();
-        if (!is_leaf) 
-        {
-            int num_children = 0;
-            memcpy(&num_children, data + off, sizeof(int));
-            off += sizeof(int);
+        int num_children = 0;
+        memcpy(&num_children, data + off, sizeof(int));
+        off += sizeof(int);
 
-            for (int i = 0; i < num_children; i++) 
-            {
-                int child_id;
-                memcpy(&child_id, data + off, sizeof(int));
-                children.push_back(child_id);
-                off += sizeof(int);
-            }
+        for (int i = 0; i < num_children; i++) 
+        {
+            int child_id;
+            memcpy(&child_id, data + off, sizeof(int));
+            children.push_back(child_id);
+            off += sizeof(int);
         }
     }
 
@@ -89,8 +85,9 @@ struct Node {
     {
         cout << "Node ID: " << page_id << " [Leaf: " << (is_leaf ? "Yes" : "No") << "]" << endl;
         cout << "Keys: ";
-        for (int k : keys) cout << k << " ";
+        for (const auto& e : entries) cout << e.id << " ";
         cout << endl;
+        
         if (!children.empty()) {
             cout << "Children: ";
             for (int c : children) cout << c << " ";
