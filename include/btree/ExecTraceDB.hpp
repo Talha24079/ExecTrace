@@ -5,7 +5,7 @@
 #include "DiskManager.hpp"
 #include "BTree.hpp"
 #include "TraceEntry.hpp"
-#include "Hasher.hpp" // <--- NEW
+#include "Hasher.hpp" 
 
 using namespace std;
 
@@ -13,14 +13,15 @@ class ExecTraceDB
 {
 private:
     string db_base_name;
+    
     DiskManager* main_dm;
-    BTree* main_tree;
+    BTree<TraceEntry>* main_tree;
 
     DiskManager* ram_dm;
-    BTree* ram_tree;
+    BTree<TraceEntry>* ram_tree;
 
     DiskManager* dur_dm;
-    BTree* dur_tree;
+    BTree<TraceEntry>* dur_tree;
 
 public:
     ExecTraceDB(string filename)
@@ -28,13 +29,13 @@ public:
         db_base_name = filename;
         
         main_dm = new DiskManager(filename + "_main.db");
-        main_tree = new BTree(main_dm);
+        main_tree = new BTree<TraceEntry>(main_dm);
 
         ram_dm = new DiskManager(filename + "_ram.db");
-        ram_tree = new BTree(ram_dm);
+        ram_tree = new BTree<TraceEntry>(ram_dm);
 
         dur_dm = new DiskManager(filename + "_dur.db");
-        dur_tree = new BTree(dur_dm);
+        dur_tree = new BTree<TraceEntry>(dur_dm);
     }
 
     ~ExecTraceDB()
@@ -70,18 +71,27 @@ public:
 
     vector<TraceEntry> query_range(int start_id, int end_id)
     {
-        return main_tree->range_search(start_id, end_id);
+        TraceEntry start_key; start_key.id = start_id;
+        TraceEntry end_key; end_key.id = end_id;
+        return main_tree->range_search(start_key, end_key);
     }
     
     vector<TraceEntry> query_by_ram(int min_ram, int max_ram) 
     {
         vector<TraceEntry> results;
-        vector<TraceEntry> index_hits = ram_tree->range_search(min_ram, max_ram);
+        
+        TraceEntry start_key; start_key.id = min_ram;
+        TraceEntry end_key; end_key.id = max_ram;
+
+        vector<TraceEntry> index_hits = ram_tree->range_search(start_key, end_key);
 
         for(const auto& idx : index_hits) 
         {
             int real_id = (int)idx.ram_usage; 
-            vector<TraceEntry> full_record = main_tree->range_search(real_id, real_id);
+            
+            TraceEntry target_key; target_key.id = real_id;
+            vector<TraceEntry> full_record = main_tree->range_search(target_key, target_key);
+            
             if (!full_record.empty()) results.push_back(full_record[0]);
         }
         return results;
@@ -90,12 +100,19 @@ public:
     vector<TraceEntry> query_by_duration(int min_dur, int max_dur) 
     {
         vector<TraceEntry> results;
-        vector<TraceEntry> index_hits = dur_tree->range_search(min_dur, max_dur);
+
+        TraceEntry start_key; start_key.id = min_dur;
+        TraceEntry end_key; end_key.id = max_dur;
+
+        vector<TraceEntry> index_hits = dur_tree->range_search(start_key, end_key);
 
         for(const auto& idx : index_hits) 
         {
             int real_id = (int)idx.duration;
-            vector<TraceEntry> full_record = main_tree->range_search(real_id, real_id);
+            
+            TraceEntry target_key; target_key.id = real_id;
+            vector<TraceEntry> full_record = main_tree->range_search(target_key, target_key);
+            
             if (!full_record.empty()) results.push_back(full_record[0]);
         }
         return results;

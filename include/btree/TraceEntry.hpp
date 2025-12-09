@@ -34,4 +34,31 @@ struct TraceEntry
         ram_usage = ram;
         rom_size = rom;
     }
+    
+    bool operator<(const TraceEntry& other) const {
+        return id < other.id;
+    }
+
+    bool operator>(const TraceEntry& other) const {
+        return id > other.id;
+    }
+
+    bool operator==(const TraceEntry& other) const {
+        return id == other.id;
+    }
+
+    bool operator>=(const TraceEntry& other) const {
+        return id >= other.id;
+    }
+
+    bool operator<=(const TraceEntry& other) const {
+        return id <= other.id;
+    }
+
+    void print() const {
+        std::cout << "ID: " << id 
+                  << " | " << process_name 
+                  << " | RAM: " << ram_usage 
+                  << " | DUR: " << duration << std::endl;
+    }
 };
