@@ -1,97 +1,74 @@
 #pragma once
 #include <vector>
-#include <iostream>
-#include <cstring> 
-#include "Types.hpp"
-#include "TraceEntry.hpp" // Include your new struct
+#include <cstring>
+#include "Types.hpp" 
 
 using namespace std;
 
-struct Node {
+template <typename T>
+class Node
+{
+public:
     int page_id;
     bool is_leaf;
-    vector<TraceEntry> entries; 
+    vector<T> entries;
     vector<int> children;
 
-    // Constructor
-    Node(int id, bool leaf) {
-        page_id = id;
-        is_leaf = leaf;
-    }
+    static int CAPACITY = (PAGE_SIZE - sizeof(bool) - 2 * sizeof(int)) / (sizeof(T) + sizeof(int));
+    
+    static int DEGREE = (RAW_CAPACITY + 1) / 2;
+    static int MAX_KEYS = 2 * DEGREE - 1;
 
-    // Save to buffer 
-    void serialize(char* data) 
+    Node(int id, bool leaf) : page_id(id), is_leaf(leaf) {}
+
+    Node() : page_id(0), is_leaf(true) {}
+
+    void serialize(char* buffer)
     {
-        int off = 0;
+        memset(buffer, 0, PAGE_SIZE);
+        int offset = 0;
 
-        memcpy(data + off, &is_leaf, sizeof(bool));
-        off += sizeof(bool);
+        memcpy(buffer + offset, &is_leaf, sizeof(bool));
+        offset += sizeof(bool);
 
-        int num_entries = entries.size();
-        memcpy(data + off, &num_entries, sizeof(int));
-        off += sizeof(int);
+        int count = entries.size();
+        memcpy(buffer + offset, &count, sizeof(int));
+        offset += sizeof(int);
 
-        for (int i = 0; i < num_entries; i++) 
+        if (count > 0)
         {
-            memcpy(data + off, &entries[i], sizeof(TraceEntry));
-            off += sizeof(TraceEntry);
+            memcpy(buffer + offset, entries.data(), count * sizeof(T));
+            offset += count * sizeof(T);
         }
 
-        int num_children = children.size();
-        memcpy(data + off, &num_children, sizeof(int));
-        off += sizeof(int);
-
-        for (int i = 0; i < num_children; i++) 
+        if (!is_leaf)
         {
-            memcpy(data + off, &children[i], sizeof(int));
-            off += sizeof(int);
-        }
-    }
-    void deserialize(char* data) 
-    {
-        int off = 0;
-
-        memcpy(&is_leaf, data + off, sizeof(bool));
-        off += sizeof(bool);
-
-        int num_entries = 0;
-        memcpy(&num_entries, data + off, sizeof(int));
-        off += sizeof(int);
-
-        entries.clear(); 
-        for (int i = 0; i < num_entries; i++) 
-        {
-            TraceEntry entry;
-            memcpy(&entry, data + off, sizeof(TraceEntry));
-            entries.push_back(entry);
-            off += sizeof(TraceEntry);
-        }
-
-        children.clear();
-        int num_children = 0;
-        memcpy(&num_children, data + off, sizeof(int));
-        off += sizeof(int);
-
-        for (int i = 0; i < num_children; i++) 
-        {
-            int child_id;
-            memcpy(&child_id, data + off, sizeof(int));
-            children.push_back(child_id);
-            off += sizeof(int);
+            memcpy(buffer + offset, children.data(), children.size() * sizeof(int));
         }
     }
 
-    void print_node() 
+    void deserialize(char* buffer)
     {
-        cout << "Node ID: " << page_id << " [Leaf: " << (is_leaf ? "Yes" : "No") << "]" << endl;
-        cout << "Keys: ";
-        for (const auto& e : entries) cout << e.id << " ";
-        cout << endl;
-        
-        if (!children.empty()) {
-            cout << "Children: ";
-            for (int c : children) cout << c << " ";
-            cout << endl;
+        int offset = 0;
+
+        memcpy(&is_leaf, buffer + offset, sizeof(bool));
+        offset += sizeof(bool);
+
+        int count;
+        memcpy(&count, buffer + offset, sizeof(int));
+        offset += sizeof(int);
+
+        entries.resize(count);
+        if (count > 0)
+        {
+            memcpy(entries.data(), buffer + offset, count * sizeof(T));
+            offset += count * sizeof(T);
+        }
+
+        if (!is_leaf)
+        {
+            children.resize(count + 1);
+            memcpy(children.data(), buffer + offset, (count + 1) * sizeof(int));
         }
     }
 };
