@@ -3,7 +3,8 @@
 #include <string>
 #include <vector>
 #include <iostream>
-#include <mutex> 
+#include <mutex>
+#include <unordered_map> 
 #include "DiskManager.hpp"
 #include "BTree.hpp"
 #include "TraceEntry.hpp"
@@ -16,6 +17,8 @@ class ExecTraceDB
 private:
     string db_base_name;
     mutex db_mutex; 
+
+    unordered_map<string, int> version_map; 
 
     DiskManager* main_dm;
     BTree<TraceEntry>* main_tree;
@@ -43,35 +46,40 @@ public:
 
     ~ExecTraceDB()
     {
-        delete main_tree;
-        delete main_dm;
-        delete ram_tree;
-        delete ram_dm;
-        delete dur_tree;
-        delete dur_dm;
+        delete main_tree; delete main_dm;
+        delete ram_tree;  delete ram_dm;
+        delete dur_tree;  delete dur_dm;
     }
 
-    int log_event(const char* func, const char* msg, uint64_t duration, uint64_t ram, uint64_t rom)
+    int log_event(int user_id, const char* func, const char* msg, uint64_t duration, uint64_t ram, uint64_t rom)
     {
         lock_guard<mutex> lock(db_mutex);
+
+        string version_key = to_string(user_id) + "_" + string(func);
+        int current_version = 1;
+
+        if (version_map.find(version_key) != version_map.end())
+        {
+            current_version = version_map[version_key] + 1;
+        }
+        version_map[version_key] = current_version;
 
         static uint64_t counter = 1000;
         counter++;
 
         uint64_t generated_id = Hasher::generate_unique_id(func, counter);
-
-        int id = (int)(generated_id % 1000000);
+        int id = (int)(generated_id); 
 
         TraceEntry main_entry;
-        main_entry.set(id, "12:00:00", func, msg, duration, ram, rom);
+        main_entry.set(id, user_id, current_version, "12:00:00", func, msg, duration, ram, rom);
         main_tree->insert(main_entry);
 
         TraceEntry ram_entry;
-        ram_entry.set((int)ram, "IDX", "RAM_IDX", "PTR", 0, (uint64_t)id, 0);
+        ram_entry.set((int)ram, 0, 0, "IDX", "RAM_IDX", "PTR", 0, (uint64_t)id, 0);
         ram_tree->insert(ram_entry);
 
         TraceEntry dur_entry;
-        dur_entry.set((int)duration, "IDX", "DUR_IDX", "PTR", (uint64_t)id, 0, 0);
+        dur_entry.set((int)duration, 0, 0, "IDX", "DUR_IDX", "PTR", (uint64_t)id, 0, 0);
         dur_tree->insert(dur_entry);
 
         return id;
@@ -80,10 +88,8 @@ public:
     vector<TraceEntry> query_range(int start_id, int end_id)
     {
         lock_guard<mutex> lock(db_mutex); 
-        TraceEntry start_key;
-        start_key.id = start_id;
-        TraceEntry end_key;
-        end_key.id = end_id;
+        TraceEntry start_key; start_key.id = start_id;
+        TraceEntry end_key; end_key.id = end_id;
         return main_tree->range_search(start_key, end_key);
     }
 
@@ -91,26 +97,15 @@ public:
     {
         lock_guard<mutex> lock(db_mutex); 
         vector<TraceEntry> results;
-
-        TraceEntry start_key;
-        start_key.id = min_ram;
-        TraceEntry end_key;
-        end_key.id = max_ram;
-
+        TraceEntry start_key; start_key.id = min_ram;
+        TraceEntry end_key; end_key.id = max_ram;
         vector<TraceEntry> index_hits = ram_tree->range_search(start_key, end_key);
 
-        for (const auto& idx : index_hits)
-        {
+        for (const auto& idx : index_hits) {
             int real_id = (int)idx.ram_usage;
-
-            TraceEntry target_key;
-            target_key.id = real_id;
+            TraceEntry target_key; target_key.id = real_id;
             vector<TraceEntry> full_record = main_tree->range_search(target_key, target_key);
-
-            if (!full_record.empty())
-            {
-                results.push_back(full_record[0]);
-            }
+            if (!full_record.empty()) results.push_back(full_record[0]);
         }
         return results;
     }
@@ -119,26 +114,15 @@ public:
     {
         lock_guard<mutex> lock(db_mutex); 
         vector<TraceEntry> results;
-
-        TraceEntry start_key;
-        start_key.id = min_dur;
-        TraceEntry end_key;
-        end_key.id = max_dur;
-
+        TraceEntry start_key; start_key.id = min_dur;
+        TraceEntry end_key; end_key.id = max_dur;
         vector<TraceEntry> index_hits = dur_tree->range_search(start_key, end_key);
 
-        for (const auto& idx : index_hits)
-        {
+        for (const auto& idx : index_hits) {
             int real_id = (int)idx.duration;
-
-            TraceEntry target_key;
-            target_key.id = real_id;
+            TraceEntry target_key; target_key.id = real_id;
             vector<TraceEntry> full_record = main_tree->range_search(target_key, target_key);
-
-            if (!full_record.empty())
-            {
-                results.push_back(full_record[0]);
-            }
+            if (!full_record.empty()) results.push_back(full_record[0]);
         }
         return results;
     }
