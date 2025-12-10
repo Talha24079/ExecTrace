@@ -1,64 +1,76 @@
 #pragma once
+
+#include <string>
 #include <cstring>
 #include <iostream>
-#include <cstdint>
 
-struct TraceEntry 
+struct TraceEntry
 {
     int id;
-    char timestamp[20];
+    char timestamp[16];
     char process_name[32];
     char message[64];
     uint64_t duration;
     uint64_t ram_usage;
-    uint64_t rom_size;
+    uint64_t rom_usage;
 
-    TraceEntry() 
+    TraceEntry()
     {
         id = 0;
-        std::memset(timestamp, 0, 20);
-        std::memset(process_name, 0, 32);
-        std::memset(message, 0, 64);
+        memset(timestamp, 0, sizeof(timestamp));
+        memset(process_name, 0, sizeof(process_name));
+        memset(message, 0, sizeof(message));
         duration = 0;
         ram_usage = 0;
-        rom_size = 0;
+        rom_usage = 0;
     }
 
-    void set(int k, const char* t, const char* p, const char* m, uint64_t dur, uint64_t ram, uint64_t rom) 
+    void set(int _id, const char* _time, const char* _proc, const char* _msg, uint64_t _dur, uint64_t _ram, uint64_t _rom)
     {
-        id = k;
-        strncpy(timestamp, t, 20);
-        strncpy(process_name, p, 32);
-        strncpy(message, m, 64);
-        duration = dur;
-        ram_usage = ram;
-        rom_size = rom;
+        id = _id;
+        strncpy(timestamp, _time, 15);
+        strncpy(process_name, _proc, 31);
+        strncpy(message, _msg, 63);
+        duration = _dur;
+        ram_usage = _ram;
+        rom_usage = _rom;
     }
-    
-    bool operator<(const TraceEntry& other) const {
+
+    bool operator<(const TraceEntry& other) const
+    {
         return id < other.id;
     }
 
-    bool operator>(const TraceEntry& other) const {
+    bool operator>(const TraceEntry& other) const
+    {
         return id > other.id;
     }
 
-    bool operator==(const TraceEntry& other) const {
+    bool operator==(const TraceEntry& other) const
+    {
         return id == other.id;
     }
 
-    bool operator>=(const TraceEntry& other) const {
-        return id >= other.id;
-    }
-
-    bool operator<=(const TraceEntry& other) const {
+    bool operator<=(const TraceEntry& other) const
+    {
         return id <= other.id;
     }
 
+    bool operator>=(const TraceEntry& other) const
+    {
+        return id >= other.id;
+    }
+
+    friend ostream& operator<<(ostream& os, const TraceEntry& entry)
+    {
+        os << "[" << entry.id << "] " << entry.process_name << ": " << entry.message;
+        return os;
+    }
+    
     void print() const {
-        std::cout << "ID: " << id 
+        cout << "ID: " << id 
                   << " | " << process_name 
                   << " | RAM: " << ram_usage 
-                  << " | DUR: " << duration << std::endl;
+                  << " | DUR: " << duration << endl;
     }
 };

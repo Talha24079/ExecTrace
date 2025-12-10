@@ -14,10 +14,10 @@ public:
     vector<T> entries;
     vector<int> children;
 
-    static int CAPACITY = (PAGE_SIZE - sizeof(bool) - 2 * sizeof(int)) / (sizeof(T) + sizeof(int));
+    static const int CAPACITY = (PAGE_SIZE - sizeof(bool) - 2 * sizeof(int)) / (sizeof(T) + sizeof(int));
     
-    static int DEGREE = (RAW_CAPACITY + 1) / 2;
-    static int MAX_KEYS = 2 * DEGREE - 1;
+    static const int DEGREE = (CAPACITY + 1) / 2;
+    static const int MAX_KEYS = 2 * DEGREE - 1;
 
     Node(int id, bool leaf) : page_id(id), is_leaf(leaf) {}
 
