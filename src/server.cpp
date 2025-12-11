@@ -4,11 +4,13 @@
 #include <vector>
 #include <algorithm>
 #include <set>
+#include <filesystem>
 #include "../include/httplib.h"
 #include "../include/btree/ExecTraceDB.hpp"
 #include "../include/btree/AuthDB.hpp"
 
 using namespace std;
+namespace fs = std::filesystem;
 
 ExecTraceDB* trace_db;
 AuthDB* auth_db;

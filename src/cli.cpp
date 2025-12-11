@@ -82,8 +82,13 @@ void query_logs(const string& api_key, const string& type, int min_val, int max_
         } catch (const exception& e) {
              cout << "JSON Parse Error: " << e.what() << endl;
         }
-    } else {
-        cout << "Error querying logs." << endl;
+    } 
+    else {
+
+        cout << "Error querying logs. Status: " << (res ? to_string(res->status) : "Connection Failed") << endl;
+        if (res && !res->body.empty()) {
+            cout << "Server said: " << res->body << endl;
+        }
     }
 }
 

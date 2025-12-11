@@ -43,8 +43,3 @@ A comprehensive Python test suite (`tests/test_suite.py`) is in place, covering:
 - **Security**: Cross-user data isolation checks.
 
 **Current Test Result**: ✅ **ALL PASS**
-
-## 5. Next Steps
-1.  **Frontend Integration**: The backend is ready to serve APIs for the frontend (as per previous planning).
-2.  **CI/CD Pipeline**: Set up GitHub Actions to run `tests/test_suite.py` on every push.
-3.  **CLI Testing**: Create a test suite specifically for `et-cli`.

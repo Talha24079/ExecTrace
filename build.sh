@@ -19,6 +19,6 @@ if [ $? -ne 0 ]; then
 fi
 
 echo "--- Starting Server ---"
-# Pass "../" so files are created in project root, not build/
-./et-server ../ &
+# Pass "../data" so files are created in project root under data/
+./et-server ../data &
 SERVER_PID=$!
