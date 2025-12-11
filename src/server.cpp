@@ -51,12 +51,22 @@ string logs_to_json(const vector<TraceEntry>& logs)
     return json;
 }
 
-int main()
+int main(int argc, char* argv[])
 {
     cout << "--- Initializing Secure Trace Server ---" << endl;
 
-    trace_db = new ExecTraceDB("sys_logs");
-    auth_db = new AuthDB("sys_users.db");
+    string db_prefix = "";
+    if (argc > 1) {
+        db_prefix = argv[1];
+        if (db_prefix.back() != '/') {
+             db_prefix += "/";
+        }
+    }
+    
+    cout << "Database Location: " << (db_prefix.empty() ? "./" : db_prefix) << endl;
+
+    trace_db = new ExecTraceDB(db_prefix + "sys_logs");
+    auth_db = new AuthDB(db_prefix + "sys_users.db");
 
     httplib::Server svr;
     global_svr = &svr;
@@ -126,37 +136,44 @@ int main()
     });
 
     svr.Get("/query", [&](const httplib::Request& req, httplib::Response& res) {
-        if (!check_auth_only(req, res)) return;
+        int user_id = get_user_id(req, res);
+        if (user_id == -1) return;
+
         int start = req.has_param("start") ? stoi(req.get_param_value("start")) : 0;
         int end = req.has_param("end") ? stoi(req.get_param_value("end")) : numeric_limits<int>::max();
-        vector<TraceEntry> logs = trace_db->query_range(start, end);
+        vector<TraceEntry> logs = trace_db->query_range(user_id, start, end);
         res.set_content(logs_to_json(logs), "application/json");
     });
 
     svr.Get("/query/ram", [&](const httplib::Request& req, httplib::Response& res) {
-        if (!check_auth_only(req, res)) return;
+        int user_id = get_user_id(req, res);
+        if (user_id == -1) return;
+
         int min_ram = req.has_param("min") ? stoi(req.get_param_value("min")) : 0;
         int max_ram = req.has_param("max") ? stoi(req.get_param_value("max")) : numeric_limits<int>::max();
-        vector<TraceEntry> logs = trace_db->query_by_ram(min_ram, max_ram);
+        vector<TraceEntry> logs = trace_db->query_by_ram(user_id, min_ram, max_ram);
         res.set_content(logs_to_json(logs), "application/json");
     });
 
     svr.Get("/query/duration", [&](const httplib::Request& req, httplib::Response& res) {
-        if (!check_auth_only(req, res)) return;
+        int user_id = get_user_id(req, res);
+        if (user_id == -1) return;
+
         int min_dur = req.has_param("min") ? stoi(req.get_param_value("min")) : 0;
         int max_dur = req.has_param("max") ? stoi(req.get_param_value("max")) : numeric_limits<int>::max();
-        vector<TraceEntry> logs = trace_db->query_by_duration(min_dur, max_dur);
+        vector<TraceEntry> logs = trace_db->query_by_duration(user_id, min_dur, max_dur);
         res.set_content(logs_to_json(logs), "application/json");
     });
 
     svr.Get("/query/heavy", [&](const httplib::Request& req, httplib::Response& res) {
-        if (!check_auth_only(req, res)) return;
+        int user_id = get_user_id(req, res);
+        if (user_id == -1) return;
 
         int min_ram = req.has_param("min_ram") ? stoi(req.get_param_value("min_ram")) : 0;
         int min_dur = req.has_param("min_dur") ? stoi(req.get_param_value("min_dur")) : 0;
 
-        vector<TraceEntry> ram_logs = trace_db->query_by_ram(min_ram, numeric_limits<int>::max());
-        vector<TraceEntry> dur_logs = trace_db->query_by_duration(min_dur, numeric_limits<int>::max());
+        vector<TraceEntry> ram_logs = trace_db->query_by_ram(user_id, min_ram, numeric_limits<int>::max());
+        vector<TraceEntry> dur_logs = trace_db->query_by_duration(user_id, min_dur, numeric_limits<int>::max());
 
         vector<int> ram_ids; for (const auto& log : ram_logs) ram_ids.push_back(log.id);
         vector<int> dur_ids; for (const auto& log : dur_logs) dur_ids.push_back(log.id);

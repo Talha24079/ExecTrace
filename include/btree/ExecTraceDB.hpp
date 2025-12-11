@@ -68,7 +68,7 @@ public:
         counter++;
 
         uint64_t generated_id = Hasher::generate_unique_id(func, counter);
-        int id = (int)(generated_id); 
+        int id = (int)(generated_id & 0x7FFFFFFF);
 
         TraceEntry main_entry;
         main_entry.set(id, user_id, current_version, "12:00:00", func, msg, duration, ram, rom);
@@ -85,15 +85,25 @@ public:
         return id;
     }
 
-    vector<TraceEntry> query_range(int start_id, int end_id)
+    vector<TraceEntry> query_range(int user_id, int start_id, int end_id)
     {
         lock_guard<mutex> lock(db_mutex); 
         TraceEntry start_key; start_key.id = start_id;
         TraceEntry end_key; end_key.id = end_id;
-        return main_tree->range_search(start_key, end_key);
+        vector<TraceEntry> all = main_tree->range_search(start_key, end_key);
+        
+        vector<TraceEntry> filtered;
+        for(const auto& entry : all) {
+            if (entry.user_id == (int)user_id) {
+                filtered.push_back(entry);
+            } else {
+                 // cout << "[DEBUG] Filter skipped ID: " << entry.id << " (Owner: " << entry.user_id << ") for Requester: " << user_id << endl;
+            }
+        }
+        return filtered;
     }
 
-    vector<TraceEntry> query_by_ram(int min_ram, int max_ram)
+    vector<TraceEntry> query_by_ram(int user_id, int min_ram, int max_ram)
     {
         lock_guard<mutex> lock(db_mutex); 
         vector<TraceEntry> results;
@@ -105,12 +115,14 @@ public:
             int real_id = (int)idx.ram_usage;
             TraceEntry target_key; target_key.id = real_id;
             vector<TraceEntry> full_record = main_tree->range_search(target_key, target_key);
-            if (!full_record.empty()) results.push_back(full_record[0]);
+            if (!full_record.empty() && full_record[0].user_id == user_id) {
+                results.push_back(full_record[0]);
+            }
         }
         return results;
     }
 
-    vector<TraceEntry> query_by_duration(int min_dur, int max_dur)
+    vector<TraceEntry> query_by_duration(int user_id, int min_dur, int max_dur)
     {
         lock_guard<mutex> lock(db_mutex); 
         vector<TraceEntry> results;
@@ -122,7 +134,9 @@ public:
             int real_id = (int)idx.duration;
             TraceEntry target_key; target_key.id = real_id;
             vector<TraceEntry> full_record = main_tree->range_search(target_key, target_key);
-            if (!full_record.empty()) results.push_back(full_record[0]);
+            if (!full_record.empty() && full_record[0].user_id == user_id) {
+                results.push_back(full_record[0]);
+            }
         }
         return results;
     }

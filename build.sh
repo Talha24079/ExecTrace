@@ -3,6 +3,10 @@
 mkdir -p build
 cd build
 
+
+echo "--- Stopping any existing server ---"
+pkill -f et-server || true
+
 echo "--- Configuring with CMake ---"
 cmake ..
 
@@ -15,5 +19,6 @@ if [ $? -ne 0 ]; then
 fi
 
 echo "--- Starting Server ---"
-./et-server &
+# Pass "../" so files are created in project root, not build/
+./et-server ../ &
 SERVER_PID=$!
