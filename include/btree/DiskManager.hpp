@@ -2,6 +2,7 @@
 #include <fstream>
 #include <string>
 #include <iostream>
+#include <mutex>
 #include "Types.hpp"
 
 using namespace std;
@@ -11,6 +12,7 @@ private:
     fstream db_file;     // file object
     string file_name;    // Name of the database file
     int next_page_id;    // Keeps track of the next available ID
+    mutable std::mutex file_mutex;  // Thread safety for file operations
 
 public:
     // Constructor

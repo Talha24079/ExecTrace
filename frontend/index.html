@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ExecTrace - Real-Time C++ Profiling</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-page: #F9FAFB;
+            --bg-card: #FFFFFF;
+            --primary: #4F46E5;
+            --primary-dark: #4338CA;
+            --text-title: #111827;
+            --text-body: #6B7280;
+            --border: #E5E7EB;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-page);
+            color: var(--text-body);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Glassmorphic Navbar */
+        .navbar {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 0;
+        }
+
+        .navbar .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navbar-brand {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--primary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .navbar-brand i {
+            font-size: 1.75rem;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-link {
+            color: var(--text-body);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-link:hover {
+            color: var(--text-title);
+        }
+
+        .nav-cta {
+            background: var(--primary);
+            color: white;
+            padding: 0.5rem 1.5rem;
+            border-radius: 6px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .nav-cta:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow);
+        }
+
+        /* Hero Section */
+        .hero {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 6rem 2rem 4rem;
+            text-align: center;
+            position: relative;
+        }
+
+        .hero h1 {
+            font-size: 4rem;
+            font-weight: 800;
+            color: var(--text-title);
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: fadeInUp 0.6s ease-out forwards;
+            opacity: 0;
+        }
+
+        .hero .subtitle {
+            font-size: 1.5rem;
+            color: var(--text-body);
+            margin-bottom: 3rem;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+            animation: fadeInUp 0.6s ease-out 0.1s forwards;
+            opacity: 0;
+        }
+
+        .hero-cta {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            animation: fadeInUp 0.6s ease-out 0.2s forwards;
+            opacity: 0;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 1rem 2.5rem;
+            font-size: 1.125rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: var(--shadow);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn-primary:active {
+            transform: scale(0.97);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--primary);
+            padding: 1rem 2rem;
+            font-size: 1.125rem;
+            font-weight: 600;
+            border: 2px solid var(--primary);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-page);
+        }
+
+        /* Code Snippet Card */
+        .code-preview {
+            max-width: 600px;
+            margin: 4rem auto 0;
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: var(--shadow-lg);
+            transform: rotate(-1deg);
+            animation: fadeInUp 0.8s ease-out 0.3s forwards;
+            opacity: 0;
+        }
+
+        .code-preview:hover {
+            transform: rotate(0deg) translateY(-4px);
+        }
+
+        .code-snippet {
+            background: #1F2937;
+            color: #D1D5DB;
+            padding: 1.5rem;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+            line-height: 1.6;
+            text-align: left;
+            overflow-x: auto;
+        }
+
+        .code-snippet .keyword {
+            color: #C084FC;
+        }
+
+        .code-snippet .string {
+            color: #6EE7B7;
+        }
+
+        .code-snippet .comment {
+            color: #6B7280;
+        }
+
+        /* Features Grid */
+        .features {
+            max-width: 1200px;
+            margin: 6rem auto;
+            padding: 0 2rem;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .feature-card {
+            background: var(--bg-card);
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            transition: all 0.3s;
+            animation: fadeInUp 0.6s ease-out forwards;
+            opacity: 0;
+        }
+
+        .feature-card:nth-child(1) {
+            animation-delay: 0.4s;
+        }
+
+        .feature-card:nth-child(2) {
+            animation-delay: 0.5s;
+        }
+
+        .feature-card:nth-child(3) {
+            animation-delay: 0.6s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .feature-icon {
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .feature-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-title);
+            margin-bottom: 0.75rem;
+        }
+
+        .feature-desc {
+            color: var(--text-body);
+            line-height: 1.6;
+        }
+
+        /* Registration Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 2.5rem;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            animation: scaleIn 0.3s ease-out;
+        }
+
+        .modal-header {
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text-title);
+            margin-bottom: 0.5rem;
+        }
+
+        .modal-subtitle {
+            color: var(--text-body);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            color: var(--text-title);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .success-card {
+            text-align: center;
+            padding: 1rem 0;
+        }
+
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            background: #10B981;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            margin: 0 auto 1.5rem;
+            animation: scaleIn 0.5s ease-out;
+        }
+
+        .api-key-display {
+            background: var(--bg-page);
+            padding: 1rem;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+            color: var(--primary);
+            font-weight: 600;
+            word-break: break-all;
+            margin: 1.5rem 0;
+            border: 2px dashed var(--border);
+        }
+
+        .modal-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes scaleIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .hero .subtitle {
+                font-size: 1.125rem;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .code-preview {
+                transform: rotate(0deg);
+            }
+
+            .nav-links {
+                gap: 1rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Glassmorphic Navbar -->
+    <nav class="navbar">
+        <div class="container">
+            <a href="/" class="navbar-brand">
+                <i class="fas fa-chart-line"></i>
+                ExecTrace
+            </a>
+            <div class="nav-links">
+                <a href="/" class="nav-link">Home</a>
+                <a href="/docs" class="nav-link">Docs</a>
+                <a href="/dashboard" class="nav-link">Dashboard</a>
+                <a href="#" class="nav-link nav-cta" onclick="openModal()">Get Started</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <h1>Profile C++ in Real-Time</h1>
+        <p class="subtitle">
+            Zero-overhead instrumentation for high-performance applications.
+            Track microsecond-level performance with cloud analytics.
+        </p>
+
+        <div class="hero-cta">
+            <button class="btn-primary" onclick="openModal()">
+                <i class="fas fa-rocket"></i> Start Profiling Now
+            </button>
+            <button class="btn-secondary">
+                <i class="fas fa-download"></i> Download SDK
+            </button>
+        </div>
+
+        <!-- Floating Code Snippet Card -->
+        <div class="code-preview">
+            <div class="code-snippet">
+                <span class="comment">// Instrument your C++ code in 3 lines</span><br>
+                <span class="keyword">#include</span> <span class="string">&lt;exectrace.hpp&gt;</span><br><br>
+                <span class="keyword">void</span> my_function() {<br>
+                &nbsp;&nbsp;ExecTrace::log(<span class="string">"my_function"</span>, <span
+                    class="string">"v1.0.0"</span>);<br>
+                &nbsp;&nbsp;<span class="comment">// Your code here...</span><br>
+                }<br>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Grid -->
+    <section class="features">
+        <div style="text-align: center; margin-bottom: 3rem;">
+            <h2 style="font-size: 2.5rem; font-weight: 800; color: var(--text-title);">
+                Built for Performance
+            </h2>
+            <p style="color: var(--text-body); font-size: 1.125rem; margin-top: 1rem;">
+                Industry-grade profiling tools for production C++ applications
+            </p>
+        </div>
+
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-bolt"></i>
+                </div>
+                <h3 class="feature-title">Microsecond Precision</h3>
+                <p class="feature-desc">
+                    Track function execution times down to the microsecond. Perfect for low-latency systems and
+                    real-time applications.
+                </p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-memory"></i>
+                </div>
+                <h3 class="feature-title">RAM Tracking</h3>
+                <p class="feature-desc">
+                    Monitor memory consumption per function call. Identify memory leaks and optimize allocation
+                    patterns.
+                </p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-cloud"></i>
+                </div>
+                <h3 class="feature-title">Cloud Dashboard</h3>
+                <p class="feature-desc">
+                    Real-time analytics dashboard with smart queries, filtering, and version comparison. Multi-project
+                    support.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Registration Modal -->
+    <div class="modal" id="registerModal">
+        <div class="modal-content">
+            <div id="regForm">
+                <div class="modal-header">
+                    <h2 class="modal-title">Create Your Account</h2>
+                    <p class="modal-subtitle">Enter a username to generate your secure API key</p>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Username</label>
+                    <input type="text" id="usernameInput" class="form-input" placeholder="e.g., dev_team_alpha">
+                </div>
+
+                <button class="btn-primary" style="width: 100%;" onclick="registerUser()">
+                    Generate API Key
+                </button>
+            </div>
+
+            <div id="regSuccess" style="display:none;">
+                <div class="success-card">
+                    <div class="success-icon">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <h2 class="modal-title">Welcome to ExecTrace!</h2>
+                    <p class="modal-subtitle">Your API key has been generated. Keep it safe!</p>
+
+                    <div class="api-key-display" id="apiKeyResult"></div>
+
+                    <div class="modal-actions">
+                        <button class="btn-primary" onclick="goToWorkspace()">
+                            <i class="fas fa-arrow-right"></i> Go to Workspace
+                        </button>
+                        <button class="btn-secondary" onclick="closeModal()">
+                            Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openModal() {
+            document.getElementById('registerModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('registerModal').classList.remove('active');
+        }
+
+        async function registerUser() {
+            const username = document.getElementById('usernameInput').value.trim();
+            if (!username) {
+                alert("Please enter a username");
+                return;
+            }
+
+            try {
+                const response = await fetch('/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: 'username=' + encodeURIComponent(username)
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    localStorage.setItem('user_master_key', data.api_key);
+                    localStorage.setItem('user_name', username);
+
+                    document.getElementById('regForm').style.display = 'none';
+                    document.getElementById('regSuccess').style.display = 'block';
+                    document.getElementById('apiKeyResult').textContent = data.api_key;
+                } else {
+                    alert("Registration failed. Please try again.");
+                }
+            } catch (error) {
+                console.error(error);
+                alert("Error connecting to server.");
+            }
+        }
+
+        function goToWorkspace() {
+            window.location.href = '/workspace';
+        }
+
+        // Close modal on outside click
+        document.getElementById('registerModal').addEventListener('click', function (e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+
+</html>

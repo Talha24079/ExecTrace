@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <title>ExecTrace Docs</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg: #121212;
+            --text: #eee;
+            --sidebar: #1a1a1a;
+            --code-bg: #222;
+            --border: #333;
+        }
+
+        [data-theme="light"] {
+            --bg: #fff;
+            --text: #333;
+            --sidebar: #f0f0f0;
+            --code-bg: #f8f9fa;
+            --border: #ddd;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            transition: 0.3s;
+        }
+
+        .sidebar {
+            background: var(--sidebar);
+            padding: 20px;
+            height: 100vh;
+            border-right: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+        }
+
+        pre {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            color: #0d6efd;
+            padding: 15px;
+            border-radius: 5px;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        a:hover {
+            color: #0d6efd;
+        }
+
+        .theme-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="theme-toggle" onclick="toggleTheme()"><i class="fas fa-adjust fa-lg"></i></div>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-2 sidebar">
+                <h4><i class="fas fa-book me-2"></i>Docs</h4>
+                <ul class="list-unstyled mt-4">
+                    <li class="mb-2"><a href="#quickstart">Quick Start</a></li>
+                    <li class="mb-2"><a href="#api">API Reference</a></li>
+                </ul>
+                <a href="/" class="btn btn-outline-primary btn-sm mt-4 w-100">Back Home</a>
+            </div>
+            <div class="col-md-10 p-5">
+                <h1 id="quickstart">Quick Start</h1>
+                <p>Include the SDK and use the macro.</p>
+                <pre>
+#include "exectrace.hpp"
+
+int main() {
+    ExecTrace::init("YOUR_API_KEY");
+    
+    TRACE_FUNCTION(); // Auto-logs this function
+    
+    return 0;
+}</pre>
+
+                <h2 id="api" class="mt-5">API Reference</h2>
+                <table class="table table-striped mt-3" style="color: var(--text);">
+                    <thead>
+                        <tr>
+                            <th>Function</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>init(key)</code></td>
+                            <td>Connect to localhost:8080</td>
+                        </tr>
+                        <tr>
+                            <td><code>TRACE_FUNCTION()</code></td>
+                            <td>Profile current function</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <script>
+        function toggleTheme() {
+            const html = document.documentElement;
+            const next = html.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+            html.setAttribute('data-theme', next);
+            localStorage.setItem('theme', next);
+        }
+        if (localStorage.getItem('theme')) toggleTheme();
+    </script>
+</body>
+
+</html>

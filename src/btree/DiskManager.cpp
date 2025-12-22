@@ -32,6 +32,7 @@ DiskManager::~DiskManager()
 
 void DiskManager::write_page(int page_id, const char* data) 
 {
+    std::lock_guard<std::mutex> lock(file_mutex);
     int offset = page_id * PAGE_SIZE;
     // ensure file is open
     if (!db_file.is_open()) {
@@ -65,6 +66,7 @@ void DiskManager::write_page(int page_id, const char* data)
 
 void DiskManager::read_page(int page_id, char* data) 
 {
+    std::lock_guard<std::mutex> lock(file_mutex);
     int offset = page_id * PAGE_SIZE;
 
     // initialize buffer to zeros to avoid using uninitialized data
@@ -78,6 +80,7 @@ void DiskManager::read_page(int page_id, char* data)
 
 int DiskManager::allocate_page() 
 {
+    std::lock_guard<std::mutex> lock(file_mutex);
     int id = next_page_id;
     next_page_id++;
     return id;
