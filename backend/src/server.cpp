@@ -52,27 +52,27 @@ int main() {
     httplib::Server svr;
 
     svr.Get("/", [&](const httplib::Request& req, httplib::Response& res) {
-        res.set_content(read_file("frontend/index.html"), "text/html");
+        res.set_content(read_file("../frontend/index.html"), "text/html");
     });
 
     svr.Get("/register", [&](const httplib::Request& req, httplib::Response& res) {
-        res.set_content(read_file("frontend/register.html"), "text/html");
+        res.set_content(read_file("../frontend/register.html"), "text/html");
     });
 
     svr.Get("/login", [&](const httplib::Request& req, httplib::Response& res) {
-        res.set_content(read_file("frontend/login.html"), "text/html");
+        res.set_content(read_file("../frontend/login.html"), "text/html");
     });
 
     svr.Get("/workspace", [&](const httplib::Request& req, httplib::Response& res) {
-        res.set_content(read_file("frontend/workspace.html"), "text/html");
+        res.set_content(read_file("../frontend/workspace.html"), "text/html");
     });
 
     svr.Get("/dashboard", [&](const httplib::Request& req, httplib::Response& res) {
-        res.set_content(read_file("frontend/dashboard.html"), "text/html");
+        res.set_content(read_file("../frontend/dashboard.html"), "text/html");
     });
 
     svr.Get("/docs", [&](const httplib::Request& req, httplib::Response& res) {
-        res.set_content(read_file("frontend/docs.html"), "text/html");
+        res.set_content(read_file("../frontend/docs.html"), "text/html");
     });
 
     svr.Post("/api/auth/register", [](const httplib::Request& req, httplib::Response& res) {
