@@ -6,6 +6,7 @@
 #include <cstring>
 #include <mutex>
 #include <random>
+#include <map>
 #include "Models.hpp"
 
 using namespace std;
@@ -664,6 +665,8 @@ private:
     mutex auth_mutex;
     int next_user_id;
     int next_project_id;
+    
+    map<string, UserEntry> user_by_email;
 
     string generate_api_key(const string& prefix = "sk_") {
         string chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
@@ -681,20 +684,14 @@ private:
 
 public:
     AuthDB(string user_file, string proj_file) {
-        std::cout << "Creating DiskManagers..." << std::endl;
         dm_users = new DiskManager(user_file);
-        std::cout << "Users DM created" << std::endl;
-        dm_projects = new DiskManager(proj_file);        std::cout << "Projects DM created" << std::endl;
+        dm_projects = new DiskManager(proj_file);
         
-        std::cout << "Creating BTrees..." << std::endl;
         user_tree = new BTree<UserEntry>(dm_users);
-        std::cout << "User tree created" << std::endl;
         project_tree = new BTree<ProjectEntry>(dm_projects);
-        std::cout << "Project tree created" << std::endl;
         
         next_user_id = 1;
         next_project_id = 1;
-        std::cout << "AuthDB initialized" << std::endl;
     }
 
     ~AuthDB() {
@@ -712,40 +709,26 @@ public:
             return false;
         }
 
-        size_t email_hash = SimpleHash(email);
-        UserEntry search_entry;
-        search_entry.email_hash = email_hash;
-
-        vector<UserEntry> results = user_tree->range_search(search_entry, search_entry);
-        
-        for (const auto& user : results) {
-            if (strcmp(user.email, email.c_str()) == 0) {
-                error = "Email already registered";
-                return false;
-           }
+        if (user_by_email.find(email) != user_by_email.end()) {
+            error = "Email already registered";
+            return false;
         }
 
         UserEntry new_user(email.c_str(), password.c_str(), username.c_str(), next_user_id++);
         user_tree->insert(new_user);
+        user_by_email[email] = new_user;
         return true;
     }
 
     bool login_user(const string& email, const string& password, int& user_id, string& username_out, string& error) {
         lock_guard<mutex> lock(auth_mutex);
 
-        size_t email_hash = SimpleHash(email);
-        UserEntry search_entry;
-        search_entry.email_hash = email_hash;
-
-        vector<UserEntry> results = user_tree->range_search(search_entry, search_entry);
-        
-        for (const auto& user : results) {
-            if (strcmp(user.email, email.c_str()) == 0) {
-                if (strcmp(user.password, password.c_str()) == 0) {
-                    user_id = user.user_id;
-                    username_out = string(user.username);
-                    return true;
-                }
+        auto it = user_by_email.find(email);
+        if (it != user_by_email.end()) {
+            if (strcmp(it->second.password, password.c_str()) == 0) {
+                user_id = it->second.user_id;
+                username_out = string(it->second.username);
+                return true;
             }
         }
 

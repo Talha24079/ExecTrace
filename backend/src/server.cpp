@@ -41,13 +41,8 @@ string logs_to_json(const vector<ExecTrace::TraceEntry>& logs) {
 int main() {
     cout << "--- ExecTrace Server ---" << endl;
 
-    cout << "Initializing AuthDB..." << endl;
     auth_db = new AuthDB("data/users.db", "data/projects.db");
-    cout << "AuthDB ready" << endl;
-    
-    cout << "Initializing ExecTraceDB..." << endl;
     trace_db = new ExecTraceDB("data/traces.db");
-    cout << "ExecTraceDB ready" << endl;
 
     httplib::Server svr;
 
