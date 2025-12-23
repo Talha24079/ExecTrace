@@ -681,34 +681,20 @@ private:
 
 public:
     AuthDB(string user_file, string proj_file) {
+        std::cout << "Creating DiskManagers..." << std::endl;
         dm_users = new DiskManager(user_file);
-        dm_projects = new DiskManager(proj_file);
+        std::cout << "Users DM created" << std::endl;
+        dm_projects = new DiskManager(proj_file);        std::cout << "Projects DM created" << std::endl;
         
+        std::cout << "Creating BTrees..." << std::endl;
         user_tree = new BTree<UserEntry>(dm_users);
+        std::cout << "User tree created" << std::endl;
         project_tree = new BTree<ProjectEntry>(dm_projects);
+        std::cout << "Project tree created" << std::endl;
         
         next_user_id = 1;
         next_project_id = 1;
-        
-        UserEntry min_u, max_u;
-        min_u.email_hash = 0;
-        max_u.email_hash = SIZE_MAX;
-        vector<UserEntry> all_users = user_tree->range_search(min_u, max_u);
-        for(const auto& u : all_users) {
-            if(u.user_id >= next_user_id) {
-                next_user_id = u.user_id + 1;
-            }
-        }
-        
-        ProjectEntry min_p, max_p;
-        memset(min_p.api_key, 0, 64);
-        memset(max_p.api_key, 0xFF, 64);
-        vector<ProjectEntry> all_projects = project_tree->range_search(min_p, max_p);
-        for(const auto& p : all_projects) {
-            if(p.project_id >= next_project_id) {
-                next_project_id = p.project_id + 1;
-            }
-        }
+        std::cout << "AuthDB initialized" << std::endl;
     }
 
     ~AuthDB() {
@@ -821,16 +807,6 @@ public:
         dm = new DiskManager(db_file);
         trace_tree = new BTree<TraceEntry>(dm);
         next_id = 1;
-        
-        TraceEntry min_t, max_t;
-        min_t.id = 0;
-        max_t.id = INT_MAX;
-        vector<TraceEntry> all = trace_tree->range_search(min_t, max_t);
-        for(const auto& t : all) {
-            if(t.id >= next_id) {
-                next_id = t.id + 1;
-            }
-        }
     }
 
     ~ExecTraceDB() {
