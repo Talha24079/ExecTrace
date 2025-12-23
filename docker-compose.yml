@@ -1,11 +1,11 @@
 version: '3.8'
 
 services:
-  backend:
+  exectrace:
     build: .
-    container_name: et-backend
+    container_name: exectrace-server
     ports:
       - "8080:8080"
     volumes:
-      - ./data:/data
+      - ./backend/data:/app/backend/data
     restart: unless-stopped

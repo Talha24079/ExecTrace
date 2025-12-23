@@ -1,626 +1,218 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Dashboard - ExecTrace</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>Dashboard - ExecTrace</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            /* Dark Theme (Default) */
-            --primary: #0d6efd;
-            --accent: #00d4ff;
-            --bg-body: #060818;
-            --card-bg: #1e1e2f;
-            --text-main: #e0e0e0;
-            --text-muted: #adb5bd;
-            --border-color: rgba(255, 255, 255, 0.1);
-            --input-bg: #2c2c3e;
-            --hover-bg: rgba(255, 255, 255, 0.05);
-            --success: #28a745;
-            --warning: #ffc107;
-            --danger: #dc3545;
-            --chart-grid: #333;
-        }
-
-        [data-theme="light"] {
-            /* Light Theme */
-            --primary: #0d6efd;
-            --accent: #0056b3;
-            --bg-body: #f4f6f9;
-            --card-bg: #ffffff;
-            --text-main: #212529;
-            --text-muted: #6c757d;
-            --border-color: rgba(0, 0, 0, 0.1);
-            --input-bg: #e9ecef;
-            --hover-bg: rgba(0, 0, 0, 0.05);
-            --chart-grid: #ddd;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
         body {
-            background-color: var(--bg-body);
-            color: var(--text-main);
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
-            transition: background-color 0.3s ease, color 0.3s ease;
+            font-family: 'Inter', sans-serif;
+            background: #F9FAFB;
         }
 
-        /* Navbar */
         .navbar {
-            background-color: var(--card-bg);
-            border-bottom: 1px solid var(--border-color);
-            transition: background-color 0.3s ease;
+            background: white;
+            padding: 16px 32px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
-        .navbar-brand {
+        .logo {
+            font-size: 20px;
             font-weight: 700;
-            color: var(--accent) !important;
+            color: #667eea;
         }
 
-        .nav-link {
-            color: var(--text-muted) !important;
-            transition: color 0.2s;
-        }
-
-        .nav-link:hover,
-        .nav-link.active {
-            color: var(--text-main) !important;
-        }
-
-        /* Cards & Animations */
-        .card {
-            background-color: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 15px;
-            margin-bottom: 1.5rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-            transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.3s;
-        }
-
-        .card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
-        }
-
-        .card-header {
-            background-color: rgba(127, 127, 127, 0.05);
-            border-bottom: 1px solid var(--border-color);
-            font-weight: 600;
-            color: var(--accent);
-        }
-
-        .dashboard-header {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 15px;
-            padding: 2rem;
-            margin-bottom: 2rem;
-        }
-
-        /* Stats */
-        .stat-card {
-            background: rgba(13, 110, 253, 0.05);
-            border: 1px solid rgba(13, 110, 253, 0.2);
-            border-radius: 12px;
-            padding: 1.5rem;
-            text-align: center;
-            transition: transform 0.2s;
-        }
-
-        .stat-card:hover {
-            transform: scale(1.02);
-        }
-
-        .stat-value {
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--accent);
-        }
-
-        .stat-label {
-            color: var(--text-muted);
-            font-size: 0.85rem;
-            text-transform: uppercase;
-        }
-
-        /* Tables - FIXED HOVER ISSUE */
-        .table {
-            color: var(--text-main);
-            --bs-table-color: var(--text-main);
-            --bs-table-hover-color: var(--text-main);
-            --bs-table-hover-bg: var(--hover-bg);
-        }
-
-        .table thead {
-            border-bottom: 2px solid var(--accent);
-        }
-
-        .table th {
-            color: var(--accent);
-            font-weight: 600;
-            background-color: rgba(127, 127, 127, 0.05);
-            border: none;
-        }
-
-        .table td {
-            border-color: var(--border-color);
-            vertical-align: middle;
-        }
-
-        /* Inputs */
-        .form-control {
-            background-color: var(--input-bg);
-            border: 1px solid var(--border-color);
-            color: var(--text-main);
-        }
-
-        .form-control:focus {
-            background-color: var(--input-bg);
-            color: var(--text-main);
-            border-color: var(--accent);
-            box-shadow: none;
-        }
-
-        /* Theme Toggle Button */
-        .theme-toggle {
-            cursor: pointer;
-            padding: 0.5rem;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
+        .status {
             display: flex;
             align-items: center;
-            justify-content: center;
-            transition: background 0.3s;
-            color: var(--text-main);
+            gap: 8px;
         }
 
-        .theme-toggle:hover {
-            background: var(--hover-bg);
-        }
-
-        /* Status Dots */
-        .status-dot {
-            height: 10px;
-            width: 10px;
+        .dot {
+            width: 8px;
+            height: 8px;
             border-radius: 50%;
-            display: inline-block;
-            margin-right: 5px;
+            background: #10B981;
         }
 
-        .status-connected {
-            background-color: var(--success);
-            box-shadow: 0 0 10px var(--success);
+        .dot.connecting {
+            background: #F59E0B;
+            animation: pulse 1.5s infinite;
         }
 
-        .status-disconnected {
-            background-color: var(--text-muted);
-        }
+        @keyframes pulse {
 
-        .status-error {
-            background-color: var(--danger);
-        }
-
-        @media (max-width: 768px) {
-            .hide-mobile {
-                display: none;
+            0%,
+            100% {
+                opacity: 1;
             }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 40px auto;
+            padding: 0 32px;
+        }
+
+        h1 {
+            font-size: 32px;
+            color: #111827;
+            margin-bottom: 32px;
+        }
+
+        .controls {
+            background: white;
+            padding: 16px 24px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            display: flex;
+            gap: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .table-container {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            text-align: left;
+            padding: 12px;
+            border-bottom: 2px solid #E5E7EB;
+            color: #6B7280;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #F3F4F6;
+            color: #374151;
+        }
+
+        tr:hover {
+            background: #F9FAFB;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px;
+            color: #9CA3AF;
         }
     </style>
 </head>
 
 <body>
-    <nav class="navbar navbar-expand-lg sticky-top">
-        <div class="container-fluid px-4">
-            <a class="navbar-brand" href="/"><i class="fas fa-chart-line me-2"></i>ExecTrace</a>
-            <div class="d-flex align-items-center ms-auto">
-                <a href="/" class="nav-link d-inline me-3">Home</a>
-                <a href="/docs" class="nav-link d-inline me-3">Docs</a>
-                <div class="theme-toggle" onclick="toggleTheme()" title="Toggle Theme">
-                    <i class="fas fa-moon" id="themeIcon"></i>
-                </div>
-            </div>
+    <div class="navbar">
+        <div class="logo">ExecTrace</div>
+        <div class="status">
+            <div class="dot connecting" id="statusDot"></div>
+            <span id="statusText">Connecting...</span>
         </div>
-    </nav>
+    </div>
 
-    <div class="container-fluid px-4 py-4">
-        <div class="dashboard-header fade-in">
-            <div class="row align-items-center">
-                <div class="col-md-6">
-                    <h2><i class="fas fa-tachometer-alt me-2"></i> Live Monitor</h2>
-                    <p class="text-muted mb-0">Real-time performance metrics</p>
-                </div>
-                <div class="col-md-6">
-                    <div class="d-flex gap-2 justify-content-md-end mt-3 mt-md-0">
-                        <input type="text" id="apiKey" class="form-control" placeholder="Paste API Key here..."
-                            style="max-width: 350px;">
-                        <button onclick="startMonitoring()" class="btn btn-primary fw-bold"><i
-                                class="fas fa-plug me-2"></i>Connect</button>
-                    </div>
-                </div>
-            </div>
+    <div class="container">
+        <h1>Live Dashboard</h1>
+
+        <div class="controls">
+            <span style="color: #6B7280;">Live updates enabled</span>
         </div>
 
-        <div class="row mb-4">
-            <div class="col-lg-3 col-md-6 mb-3">
-                <div class="stat-card">
-                    <div class="stat-value" id="totalLogs">0</div>
-                    <div class="stat-label">Total Logs</div>
-                </div>
-            </div>
-            <div class="col-lg-3 col-md-6 mb-3">
-                <div class="stat-card">
-                    <div class="stat-value" id="liveRam">0 KB</div>
-                    <div class="stat-label">Live RAM</div>
-                </div>
-            </div>
-            <div class="col-lg-3 col-md-6 mb-3">
-                <div class="stat-card">
-                    <div class="stat-value text-warning" id="avgDuration">0 ms</div>
-                    <div class="stat-label">Avg Duration</div>
-                </div>
-            </div>
-            <div class="col-lg-3 col-md-6 mb-3">
-                <div class="stat-card">
-                    <div class="d-flex align-items-center justify-content-center" style="height: 48px;">
-                        <span id="statusDot" class="status-dot status-disconnected"></span>
-                        <span id="statusText" class="fw-bold">Disconnected</span>
-                    </div>
-                    <div class="stat-label mt-1">Status</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="card mb-4">
-            <div class="card-header d-flex justify-content-between align-items-center" role="button"
-                data-bs-toggle="collapse" data-bs-target="#filterBody">
-                <span><i class="fas fa-filter me-2"></i> Smart Query Controls</span>
-                <i class="fas fa-chevron-down"></i>
-            </div>
-            <div id="filterBody" class="collapse show">
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-md-2">
-                            <label class="form-label text-muted small">Sort By</label>
-                            <select id="sortBy" class="form-control">
-                                <option value="id">Time (ID)</option>
-                                <option value="duration">Duration</option>
-                                <option value="ram">RAM Usage</option>
-                            </select>
-                        </div>
-                        <div class="col-md-2">
-                            <label class="form-label text-muted small">Order</label>
-                            <select id="sortOrder" class="form-control">
-                                <option value="desc">Descending</option>
-                                <option value="asc">Ascending</option>
-                            </select>
-                        </div>
-                        <div class="col-md-2">
-                            <label class="form-label text-muted small">Limit</label>
-                            <input type="number" id="queryLimit" class="form-control" value="50" placeholder="50">
-                        </div>
-                        <div class="col-md-2">
-                            <label class="form-label text-muted small">Function Filter</label>
-                            <input type="text" id="funcFilter" class="form-control" placeholder="e.g., render">
-                        </div>
-                        <div class="col-md-2">
-                            <label class="form-label text-muted small">Version Filter</label>
-                            <input type="text" id="versionFilter" class="form-control" placeholder="e.g., v1.0.0">
-                        </div>
-                        <div class="col-md-2 d-flex align-items-end">
-                            <button onclick="refreshWithQuery()" class="btn btn-primary w-100 fw-bold"><i
-                                    class="fas fa-sync me-1"></i> Refresh</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="row mb-4">
-            <div class="col-lg-6 mb-3">
-                <div class="card h-100">
-                    <div class="card-header">RAM Usage Trend</div>
-                    <div class="card-body">
-                        <canvas id="ramChart" style="max-height: 300px;"></canvas>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-6 mb-3">
-                <div class="card h-100">
-                    <div class="card-header">Performance by Function</div>
-                    <div class="card-body">
-                        <canvas id="perfChart" style="max-height: 300px;"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <span>Recent Traces</span>
-                <div>
-                    <button onclick="prevPage()" class="btn btn-sm btn-outline-secondary" id="btnPrev" disabled><i
-                            class="fas fa-chevron-left"></i> Prev</button>
-                    <span class="mx-2 text-muted" id="pageInfo">Page 1</span>
-                    <button onclick="nextPage()" class="btn btn-sm btn-outline-secondary" id="btnNext"><i
-                            class="fas fa-chevron-right"></i> Next</button>
-                </div>
-            </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead>
-                            <tr>
-                                <th class="hide-mobile">ID</th>
-                                <th>Function</th>
-                                <th class="hide-mobile">App Ver</th>
-                                <th>Duration</th>
-                                <th class="hide-mobile">RAM</th>
-                                <th>Perf</th>
-                            </tr>
-                        </thead>
-                        <tbody id="logsTable">
-                            <tr>
-                                <td colspan="6" class="text-center py-4 text-muted">Waiting for connection...</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Function</th>
+                        <th>Message</th>
+                        <th>Duration (ms)</th>
+                        <th>RAM (KB)</th>
+                        <th>Version</th>
+                    </tr>
+                </thead>
+                <tbody id="logsTable">
+                    <tr>
+                        <td colspan="5" class="empty-state">Waiting for data...</td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
     </div>
 
     <script>
-        // State
-        let allLogs = [];
-        let displayedLogs = [];
-        let intervalId = null;
-        let lastKnownId = 0;
-        let ramChart = null;
-        let perfChart = null;
-        let currentPage = 0;
-        let currentApiKey = '';
+        const urlParams = new URLSearchParams(window.location.search);
+        const apiKey = urlParams.get('key');
 
-        // Theme Handling
-        function initTheme() {
-            const savedTheme = localStorage.getItem('theme') || 'dark';
-            document.documentElement.setAttribute('data-theme', savedTheme);
-            updateThemeIcon(savedTheme);
+        if (!apiKey) {
+            alert('No API key provided');
+            window.location.href = '/workspace';
         }
 
-        function toggleTheme() {
-            const current = document.documentElement.getAttribute('data-theme');
-            const next = current === 'light' ? 'dark' : 'light';
-            document.documentElement.setAttribute('data-theme', next);
-            localStorage.setItem('theme', next);
-            updateThemeIcon(next);
-            updateChartTheme(next);
-        }
-
-        function updateThemeIcon(theme) {
-            const icon = document.getElementById('themeIcon');
-            icon.className = theme === 'light' ? 'fas fa-moon' : 'fas fa-sun';
-        }
-
-        // Initialization
-        window.onload = function () {
-            initTheme();
-            initCharts();
-            const urlParams = new URLSearchParams(window.location.search);
-            const key = urlParams.get('key');
-            if (key) {
-                document.getElementById('apiKey').value = key;
-                startMonitoring();
-            }
-        };
-
-        function initCharts() {
-            const theme = localStorage.getItem('theme') || 'dark';
-            const gridColor = theme === 'light' ? '#ddd' : '#333';
-
-            const ctx1 = document.getElementById('ramChart').getContext('2d');
-            ramChart = new Chart(ctx1, {
-                type: 'line',
-                data: { labels: [], datasets: [{ label: 'RAM (KB)', data: [], borderColor: '#00d4ff', tension: 0.3, fill: true, backgroundColor: 'rgba(0, 212, 255, 0.1)' }] },
-                options: {
-                    responsive: true,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: { beginAtZero: true, grid: { color: gridColor } },
-                        x: { display: false }
-                    }
-                }
-            });
-
-            const ctx2 = document.getElementById('perfChart').getContext('2d');
-            perfChart = new Chart(ctx2, {
-                type: 'bar',
-                data: { labels: [], datasets: [{ label: 'Avg Duration (ms)', data: [], backgroundColor: '#00d4ff' }] },
-                options: {
-                    responsive: true,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: { beginAtZero: true, grid: { color: gridColor } },
-                        x: { grid: { color: gridColor } }
-                    }
-                }
-            });
-        }
-
-        function updateChartTheme(theme) {
-            const gridColor = theme === 'light' ? '#ddd' : '#333';
-            if (ramChart) {
-                ramChart.options.scales.y.grid.color = gridColor;
-                ramChart.update();
-            }
-            if (perfChart) {
-                perfChart.options.scales.y.grid.color = gridColor;
-                perfChart.options.scales.x.grid.color = gridColor;
-                perfChart.update();
-            }
-        }
-
-        function startMonitoring() {
-            const key = document.getElementById('apiKey').value.trim();
-            if (!key) return alert("Please enter API Key");
-
-            currentApiKey = key;
-            document.getElementById('statusText').innerText = "Connecting...";
-            document.getElementById('statusDot').className = "status-dot status-warning";
-
-            if (intervalId) clearInterval(intervalId);
-            refreshWithQuery();
-            intervalId = setInterval(() => refreshWithQuery(), 3000);
-        }
-
-        async function refreshWithQuery() {
-            if (!currentApiKey) return;
-
+        async function fetchLogs() {
             try {
-                const sortBy = document.getElementById('sortBy').value;
-                const order = document.getElementById('sortOrder').value;
-                const limit = parseInt(document.getElementById('queryLimit').value) || 50;
-                const offset = currentPage * limit;
-
-                const params = new URLSearchParams({
-                    sort_by: sortBy,
-                    order: order,
-                    limit: limit,
-                    offset: offset
+                const response = await fetch(`/query/advanced?limit=50`, {
+                    headers: { 'X-API-Key': apiKey }
                 });
 
-                const res = await fetch(`/query/advanced?${params}`, {
-                    headers: { "X-API-Key": currentApiKey }
-                });
+                if (response.ok) {
+                    const logs = await response.json();
+                    updateTable(logs);
 
-                if (!res.ok) throw new Error("Auth Failed");
-
-                const logs = await res.json();
-                allLogs = logs;
-                applyFilters();
-                updatePaginationButtons(logs.length, limit);
-                updateStatus(true);
-
-                // Fetch statistics
-                fetchStats();
-            } catch (e) {
-                console.error(e);
-                updateStatus(false);
-            }
-        }
-
-        async function fetchStats() {
-            try {
-                const res = await fetch('/stats?group_by=func', {
-                    headers: { "X-API-Key": currentApiKey }
-                });
-                if (res.ok) {
-                    const stats = await res.json();
-                    updatePerfChart(stats);
+                    document.getElementById('statusDot').classList.remove('connecting');
+                    document.getElementById('statusText').textContent = 'Live';
+                } else {
+                    document.getElementById('statusText').textContent = 'Error';
                 }
-            } catch (e) {
-                console.error('Stats fetch failed', e);
+            } catch (error) {
+                document.getElementById('statusText').textContent = 'Offline';
             }
         }
 
-        function applyFilters() {
-            const funcFilter = document.getElementById('funcFilter').value.trim().toLowerCase();
-            const versionFilter = document.getElementById('versionFilter').value.trim();
+        function updateTable(logs) {
+            const tbody = document.getElementById('logsTable');
 
-            displayedLogs = allLogs.filter(l => {
-                let match = true;
-                if (funcFilter && !l.func.toLowerCase().includes(funcFilter)) match = false;
-                if (versionFilter && l.app_version !== versionFilter) match = false;
-                return match;
-            });
-            updateUI();
-        }
-
-        function updateUI() {
-            // Stats
-            document.getElementById('totalLogs').innerText = allLogs.length;
-            if (displayedLogs.length > 0) {
-                const latest = displayedLogs[displayedLogs.length - 1];
-                document.getElementById('liveRam').innerText = latest.ram + " KB";
-                const avg = displayedLogs.reduce((acc, l) => acc + l.duration, 0) / displayedLogs.length;
-                document.getElementById('avgDuration').innerText = Math.round(avg) + " ms";
-            }
-
-            // Table
-            const tableBody = document.getElementById('logsTable');
-            tableBody.innerHTML = "";
-
-            if (displayedLogs.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-muted">No logs found</td></tr>';
+            if (logs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No logs yet</td></tr>';
                 return;
             }
 
-            displayedLogs.forEach(l => {
-                let badgeClass = 'bg-primary';
-                let perf = 'Normal';
-                if (l.duration < 50) { badgeClass = 'bg-success'; perf = 'Fast'; }
-                else if (l.duration > 500) { badgeClass = 'bg-danger'; perf = 'Slow'; }
-
-                const row = `<tr>
-                    <td class="hide-mobile text-muted">#${l.id}</td>
-                    <td class="fw-bold" style="color: var(--accent);">${l.func}</td>
-                    <td class="hide-mobile"><span class="badge bg-info">${l.app_version || 'v1.0.0'}</span></td>
-                    <td>${l.duration} ms</td>
-                    <td class="hide-mobile text-info">${l.ram} KB</td>
-                    <td><span class="badge ${badgeClass}">${perf}</span></td>
-                </tr>`;
-                tableBody.innerHTML += row;
+            tbody.innerHTML = '';
+            logs.reverse().forEach(log => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${log.func}</td>
+                    <td>${log.message}</td>
+                    <td>${log.duration}</td>
+                    <td>${log.ram}</td>
+                    <td>${log.app_version}</td>
+                `;
+                tbody.appendChild(row);
             });
-
-            // Charts
-            const chartSlice = displayedLogs.slice(-30);
-            ramChart.data.labels = chartSlice.map(l => l.func);
-            ramChart.data.datasets[0].data = chartSlice.map(l => l.ram);
-            ramChart.update();
         }
 
-        function updatePerfChart(stats) {
-            const funcs = Object.keys(stats).slice(0, 10);
-            const avgDurations = funcs.map(f => stats[f].avg_duration);
-
-            perfChart.data.labels = funcs;
-            perfChart.data.datasets[0].data = avgDurations;
-            perfChart.update();
-        }
-
-        function updateStatus(connected) {
-            const dot = document.getElementById('statusDot');
-            const txt = document.getElementById('statusText');
-            if (connected) {
-                dot.className = "status-dot status-connected";
-                txt.innerText = "Live";
-                txt.className = "fw-bold text-success";
-            } else {
-                dot.className = "status-dot status-error";
-                txt.innerText = "Error";
-                txt.className = "fw-bold text-danger";
-            }
-        }
-
-        function updatePaginationButtons(resultCount, limit) {
-            document.getElementById('pageInfo').innerText = `Page ${currentPage + 1}`;
-            document.getElementById('btnPrev').disabled = currentPage === 0;
-            document.getElementById('btnNext').disabled = resultCount < limit;
-        }
-
-        function nextPage() {
-            currentPage++;
-            refreshWithQuery();
-        }
-
-        function prevPage() {
-            if (currentPage > 0) {
-                currentPage--;
-                refreshWithQuery();
-            }
-        }
+        fetchLogs();
+        setInterval(fetchLogs, 2000);
     </script>
 </body>
 
