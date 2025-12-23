@@ -715,7 +715,6 @@ public:
         }
 
         UserEntry new_user(email.c_str(), password.c_str(), username.c_str(), next_user_id++);
-        user_tree->insert(new_user);
         user_by_email[email] = new_user;
         return true;
     }
