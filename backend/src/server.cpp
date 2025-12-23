@@ -15,7 +15,7 @@ AuthDB* auth_db;
 ExecTraceDB* trace_db;
 
 string read_file(const string& path) {
-    ifstream file("../" + path);
+    ifstream file(path);
     if (!file.is_open()) return "";
     stringstream buffer;
     buffer << file.rdbuf();
