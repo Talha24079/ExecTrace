@@ -1,6 +1,6 @@
 # ExecTrace - Real-Time C++ Profiler
 
-Clean, minimalist SaaS platform for profiling C++ applications in real-time.
+Clean, minimalist platform for profiling C++ applications in real-time.
 
 ## Project Structure
 
