@@ -52,8 +52,20 @@ public:
 
     void read_page(int page_id, char* data) {
         lock_guard<mutex> lock(file_mutex);
-        db_file.seekg(page_id * PAGE_SIZE, ios::beg);
-        db_file.read(data, PAGE_SIZE);
+        
+        // Initialize buffer to zeros first
+        memset(data, 0, PAGE_SIZE);
+        
+        // Check if file is large enough to contain this page
+        db_file.seekg(0, ios::end);
+        auto file_size = db_file.tellg();
+        
+        if (page_id * PAGE_SIZE < file_size) {
+            // Page exists, read it
+            db_file.seekg(page_id * PAGE_SIZE, ios::beg);
+            db_file.read(data, PAGE_SIZE);
+        }
+        // If page doesn't exist, data is already zeroed
     }
 
     int allocate_page() {
@@ -108,15 +120,37 @@ public:
         memcpy(&count, buffer + offset, sizeof(int));
         offset += sizeof(int);
 
+        // Bounds check: ensure count is reasonable
+        if (count < 0 || count > MAX_KEYS) {
+            cerr << "ERROR: Invalid count " << count << " during deserialize, resetting to 0" << endl;
+            count = 0;
+        }
+
+        entries.clear();
         entries.resize(count);
         if (count > 0) {
-            memcpy(entries.data(), buffer + offset, count * sizeof(T));
-            offset += count * sizeof(T);
+            // Additional safety: check if we have enough space in buffer
+            size_t bytes_needed = count * sizeof(T);
+            if (offset + bytes_needed <= PAGE_SIZE) {
+                memcpy(entries.data(), buffer + offset, bytes_needed);
+                offset += bytes_needed;
+            } else {
+                cerr << "ERROR: Not enough buffer space for entries" << endl;
+                entries.clear();
+                count = 0;
+            }
         }
 
         if (!is_leaf) {
+            children.clear();
             children.resize(count + 1);
-            memcpy(children.data(), buffer + offset, (count + 1) * sizeof(int));
+            size_t child_bytes = (count + 1) * sizeof(int);
+            if (offset + child_bytes <= PAGE_SIZE) {
+                memcpy(children.data(), buffer + offset, child_bytes);
+            } else {
+                cerr << "ERROR: Not enough buffer space for children" << endl;
+                children.clear();
+            }
         }
     }
 };
@@ -660,13 +694,17 @@ class AuthDB {
 private:
     DiskManager* dm_users;
     DiskManager* dm_projects;
+    DiskManager* dm_settings;
     BTree<UserEntry>* user_tree;
     BTree<ProjectEntry>* project_tree;
+    BTree<ProjectSettings>* settings_tree;
     mutex auth_mutex;
     int next_user_id;
     int next_project_id;
     
     map<string, UserEntry> user_by_email;
+    map<string, ProjectEntry> project_by_key;
+    map<int, ProjectSettings> project_settings;
 
     string generate_api_key(const string& prefix = "sk_") {
         string chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
@@ -683,15 +721,53 @@ private:
     }
 
 public:
-    AuthDB(string user_file, string proj_file) {
+    AuthDB(string user_file, string proj_file, string settings_file) {
         dm_users = new DiskManager(user_file);
         dm_projects = new DiskManager(proj_file);
+        dm_settings = new DiskManager(settings_file);
         
         user_tree = new BTree<UserEntry>(dm_users);
         project_tree = new BTree<ProjectEntry>(dm_projects);
+        settings_tree = new BTree<ProjectSettings>(dm_settings);
         
         next_user_id = 1;
         next_project_id = 1;
+        
+        // Load existing data from BTree into maps
+        UserEntry min_user, max_user;
+        min_user.email_hash = 0;
+        max_user.email_hash = SIZE_MAX;
+        vector<UserEntry> users = user_tree->range_search(min_user, max_user);
+        
+        for (const auto& user : users) {
+            user_by_email[string(user.email)] = user;
+            if (user.user_id >= next_user_id) {
+                next_user_id = user.user_id + 1;
+            }
+        }
+        
+        // Load all projects
+        ProjectEntry min_proj, max_proj;
+        memset(min_proj.api_key, 0, sizeof(min_proj.api_key));
+        memset(max_proj.api_key, 0xFF, sizeof(max_proj.api_key));
+        vector<ProjectEntry> projects = project_tree->range_search(min_proj, max_proj);
+        
+        for (const auto& proj : projects) {
+            project_by_key[string(proj.api_key)] = proj;
+            if (proj.project_id >= next_project_id) {
+                next_project_id = proj.project_id + 1;
+            }
+        }
+        
+        // Load all settings
+        ProjectSettings min_settings, max_settings;
+        min_settings.project_id = 0;
+        max_settings.project_id = INT_MAX;
+        vector<ProjectSettings> all_settings = settings_tree->range_search(min_settings, max_settings);
+        
+        for (const auto& setting : all_settings) {
+            project_settings[setting.project_id] = setting;
+        }
     }
 
     ~AuthDB() {
@@ -716,6 +792,7 @@ public:
 
         UserEntry new_user(email.c_str(), password.c_str(), username.c_str(), next_user_id++);
         user_by_email[email] = new_user;
+        user_tree->insert(new_user);
         return true;
     }
 
@@ -741,6 +818,7 @@ public:
         string new_key = generate_api_key("sk_live_");
         
         ProjectEntry proj(new_key.c_str(), next_project_id++, owner_id, project_name.c_str());
+        project_by_key[new_key] = proj;
         project_tree->insert(proj);
         
         return new_key;
@@ -748,12 +826,9 @@ public:
 
     bool validate_project_key(string api_key, ProjectEntry& out_proj) {
         lock_guard<mutex> lock(auth_mutex);
-        ProjectEntry target;
-        strncpy(target.api_key, api_key.c_str(), 63);
-
-        vector<ProjectEntry> result = project_tree->range_search(target, target);
-        if (!result.empty()) {
-            out_proj = result[0];
+        auto it = project_by_key.find(api_key);
+        if (it != project_by_key.end()) {
+            out_proj = it->second;
             return true;
         }
         return false;
@@ -762,18 +837,48 @@ public:
     vector<ProjectEntry> get_user_projects(int user_id) {
         lock_guard<mutex> lock(auth_mutex);
         
-        ProjectEntry min_p, max_p;
-        memset(min_p.api_key, 0, 64);
-        memset(max_p.api_key, 0xFF, 64);
-        
-        vector<ProjectEntry> all = project_tree->range_search(min_p, max_p);
         vector<ProjectEntry> filtered;
         
-        for(const auto& p : all) {
-            if(p.owner_id == user_id)
-                filtered.push_back(p);
+        // Iterate over in-memory map instead of BTree
+        for(const auto& kv : project_by_key) {
+            if(kv.second.owner_id == user_id) {
+                filtered.push_back(kv.second);
+            }
         }
         return filtered;
+    }
+
+    ProjectSettings get_project_settings(int project_id) {
+        lock_guard<mutex> lock(auth_mutex);
+        auto it = project_settings.find(project_id);
+        if (it != project_settings.end()) {
+            return it->second;
+        }
+        // Return defaults if not found
+        ProjectSettings defaults(project_id, 100, 500);
+        project_settings[project_id] = defaults;
+        return defaults;
+    }
+
+    void update_project_settings(int project_id, int fast_ms, int slow_ms) {
+        lock_guard<mutex> lock(auth_mutex);
+        ProjectSettings settings(project_id, fast_ms, slow_ms);
+        project_settings[project_id] = settings;
+        
+        // Persist to BTree
+        settings_tree->insert(settings);
+    }
+
+    bool delete_project(string api_key) {
+        lock_guard<mutex> lock(auth_mutex);
+        auto it = project_by_key.find(api_key);
+        if (it != project_by_key.end()) {
+            int project_id = it->second.project_id;
+            project_by_key.erase(it);
+            project_settings.erase(project_id);
+            return true;
+        }
+        return false;
     }
 };
 

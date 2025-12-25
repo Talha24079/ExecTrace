@@ -7,6 +7,7 @@
 #include <vector>
 #include <fstream>
 #include <sstream>
+#include <algorithm>
 
 using namespace std;
 using json = nlohmann::json;
@@ -41,7 +42,7 @@ string logs_to_json(const vector<ExecTrace::TraceEntry>& logs) {
 int main() {
     cout << "--- ExecTrace Server ---" << endl;
 
-    auth_db = new AuthDB("data/users.db", "data/projects.db");
+    auth_db = new AuthDB("data/users.db", "data/projects.db", "data/settings.db");
     trace_db = new ExecTraceDB("data/traces.db");
 
     httplib::Server svr;
@@ -157,6 +158,74 @@ int main() {
         res.set_content(j.dump(), "application/json");
     });
 
+    svr.Get("/api/projects/(\\d+)/settings", [](const httplib::Request& req, httplib::Response& res) {
+        auto project_id = stoi(req.matches[1].str());
+        auto settings = auth_db->get_project_settings(project_id);
+        
+        json response = {
+            {"project_id", settings.project_id},
+            {"fast_threshold_ms", settings.fast_threshold_ms},
+            {"slow_threshold_ms", settings.slow_threshold_ms}
+        };
+        res.set_content(response.dump(), "application/json");
+    });
+
+    svr.Post("/api/projects/(\\d+)/settings", [](const httplib::Request& req, httplib::Response& res) {
+        auto project_id = stoi(req.matches[1].str());
+        
+        if (!req.has_param("fast_threshold_ms") || !req.has_param("slow_threshold_ms")) {
+            res.status = 400;
+            res.set_content("{\"error\": \"Missing thresholds\"}", "application/json");
+            return;
+        }
+
+        int fast_ms = stoi(req.get_param_value("fast_threshold_ms"));
+        int slow_ms = stoi(req.get_param_value("slow_threshold_ms"));
+        
+        auth_db->update_project_settings(project_id, fast_ms, slow_ms);
+        res.set_content("{\"success\": true}", "application/json");
+    });
+
+    // Get project info from API key
+    svr.Get("/api/project/info", [](const httplib::Request& req, httplib::Response& res) {
+        string key = req.get_header_value("X-API-Key");
+        ExecTrace::ProjectEntry proj;
+
+        if (!auth_db->validate_project_key(key, proj)) {
+            res.status = 403;
+            res.set_content("{\"error\": \"Invalid API Key\"}", "application/json");
+            return;
+        }
+
+        json response = {
+            {"id", proj.project_id},
+            {"name", proj.name},
+            {"owner_id", proj.owner_id},
+            {"created_at", proj.created_at}
+        };
+        res.set_content(response.dump(), "application/json");
+    });
+
+    svr.Delete("/api/projects/(\\d+)", [](const httplib::Request& req, httplib::Response& res) {
+        auto project_id = stoi(req.matches[1].str());
+        
+        if (!req.has_param("api_key")) {
+            res.status = 400;
+            res.set_content("{\"error\": \"Missing API key\"}", "application/json");
+            return;
+        }
+
+        string api_key = req.get_param_value("api_key");
+        bool deleted = auth_db->delete_project(api_key);
+        
+        if (deleted) {
+            res.set_content("{\"success\": true}", "application/json");
+        } else {
+            res.status = 404;
+            res.set_content("{\"error\": \"Project not found\"}", "application/json");
+        }
+    });
+
     svr.Post("/log", [](const httplib::Request& req, httplib::Response& res) {
         string key = req.get_header_value("X-API-Key");
         ExecTrace::ProjectEntry proj;
@@ -194,8 +263,30 @@ int main() {
         }
 
         int limit = req.has_param("limit") ? stoi(req.get_param_value("limit")) : 50;
+        string sort_by = req.has_param("sort_by") ? req.get_param_value("sort_by") : "timestamp";
+        string sort_order = req.has_param("sort_order") ? req.get_param_value("sort_order") : "desc";
         
         vector<ExecTrace::TraceEntry> logs = trace_db->query_range(proj.project_id, 0, INT_MAX);
+        
+        // Sort logs based on parameters
+        if (sort_by == "duration") {
+            sort(logs.begin(), logs.end(), [&](const ExecTrace::TraceEntry& a, const ExecTrace::TraceEntry& b) {
+                return sort_order == "asc" ? a.duration < b.duration : a.duration > b.duration;
+            });
+        } else if (sort_by == "ram") {
+            sort(logs.begin(), logs.end(), [&](const ExecTrace::TraceEntry& a, const ExecTrace::TraceEntry& b) {
+                return sort_order == "asc" ? a.ram_usage < b.ram_usage : a.ram_usage > b.ram_usage;
+            });
+        } else if (sort_by == "func") {
+            sort(logs.begin(), logs.end(), [&](const ExecTrace::TraceEntry& a, const ExecTrace::TraceEntry& b) {
+                int cmp = strcmp(a.func, b.func);
+                return sort_order == "asc" ? cmp < 0 : cmp > 0;
+            });
+        } else { // timestamp (default)
+            sort(logs.begin(), logs.end(), [&](const ExecTrace::TraceEntry& a, const ExecTrace::TraceEntry& b) {
+                return sort_order == "asc" ? a.timestamp < b.timestamp : a.timestamp > b.timestamp;
+            });
+        }
         
         if (logs.size() > limit) {
             vector<ExecTrace::TraceEntry> limited(logs.end() - limit, logs.end());

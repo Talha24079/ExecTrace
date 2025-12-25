@@ -8,6 +8,8 @@ void init(const std::string& project_api_key, const std::string& app_version = "
 
 void log(const std::string& func_name, uint64_t duration_ms, uint64_t ram_usage_kb, const std::string& msg = "");
 
+std::string auto_version();
+
 class ScopedTrace {
 private:
     std::string name;

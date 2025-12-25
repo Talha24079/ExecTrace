@@ -102,6 +102,12 @@
             word-break: break-all;
         }
 
+        .project-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
         .btn {
             padding: 10px 16px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -110,12 +116,82 @@
             border-radius: 6px;
             cursor: pointer;
             font-weight: 600;
-            width: 100%;
+            flex: 1;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
         }
 
         .btn-secondary {
             background: #F3F4F6;
             color: #374151;
+        }
+
+        .btn-secondary:hover {
+            background: #E5E7EB;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 13px;
+        }
+
+        .btn-danger {
+            background: #EF4444;
+        }
+
+        .btn-danger:hover {
+            background: #DC2626;
+            box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .threshold-preview {
+            margin: 16px 0;
+            padding: 16px;
+            background: #F9FAFB;
+            border-radius: 8px;
+        }
+
+        .threshold-preview h4 {
+            margin-bottom: 12px;
+            color: #374151;
+            font-size: 14px;
+        }
+
+        .preview-badges {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .preview-badge {
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .preview-fast {
+            background: #D1FAE5;
+            color: #065F46;
+        }
+
+        .preview-normal {
+            background: #FEF3C7;
+            color: #92400E;
+        }
+
+        .preview-slow {
+            background: #FEE2E2;
+            color: #991B1B;
         }
 
         .new-project-card {
@@ -209,7 +285,61 @@
             <input type="text" id="projectName" placeholder="Project Name">
             <div class="modal-actions">
                 <button class="btn btn-secondary" onclick="hideNewProject()">Cancel</button>
-                <button class="btn" onclick="createProject()">Create</button>
+                <button class="btn" id="createBtn" onclick="createProject()">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <h2>Project Settings</h2>
+            <p style="color: #6B7280; margin-bottom: 20px;" id="settingsProjectName">Configure performance thresholds
+            </p>
+
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; margin-bottom: 8px; color: #374151; font-weight: 600;">Fast Threshold
+                    (ms)</label>
+                <input type="number" id="fastThreshold" placeholder="100" value="100" style="width: 100%;">
+                <p style="font-size: 12px; color: #6B7280; margin-top: 4px;">Functions faster than this are marked as
+                    Fast 🟢</p>
+            </div>
+
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; margin-bottom: 8px; color: #374151; font-weight: 600;">Slow Threshold
+                    (ms)</label>
+                <input type="number" id="slowThreshold" placeholder="500" value="500" style="width: 100%;">
+                <p style="font-size: 12px; color: #6B7280; margin-top: 4px;">Functions slower than this are marked as
+                    Slow 🔴</p>
+            </div>
+
+            <div class="threshold-preview">
+                <h4>Preview Classification:</h4>
+                <div class="preview-badges">
+                    <div class="preview-badge preview-fast">🟢 Fast (&lt;<span id="previewFast">100</span>ms)</div>
+                    <div class="preview-badge preview-normal">🟡 Normal (<span id="previewFast2">100</span>-<span
+                            id="previewSlow">500</span>ms)</div>
+                    <div class="preview-badge preview-slow">🔴 Slow (&gt;<span id="previewSlow2">500</span>ms)</div>
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="hideSettings()">Cancel</button>
+                <button class="btn" onclick="saveSettings()">Save Settings</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal" id="deleteModal">
+        <div class="modal-content">
+            <h2 style="color: #DC2626;">⚠️ Delete Project?</h2>
+            <p style="color: #6B7280; margin-bottom: 20px;">This action cannot be undone. All project data and logs will
+                be permanently deleted.</p>
+            <p style="font-weight: 600; color: #374151; margin-bottom: 20px;" id="deleteProjectName">Project: </p>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="hideDelete()">Cancel</button>
+                <button class="btn btn-danger" onclick="confirmDelete(this)">Delete Project</button>
             </div>
         </div>
     </div>
@@ -234,14 +364,136 @@
                 card.innerHTML = `
                     <h3>${proj.name}</h3>
                     <div class="project-key">${proj.api_key}</div>
-                    <button class="btn" onclick="openDashboard('${proj.api_key}')">Open Dashboard</button>
+                    <div class="project-actions">
+                        <button class="btn" onclick="openDashboard('${proj.api_key}')">Dashboard</button>
+                        <button class="btn btn-secondary btn-small" onclick="showSettings(${proj.id}, '${proj.name}')">⚙️ Settings</button>
+                        <button class="btn btn-danger btn-small" onclick="showDelete(${proj.id}, '${proj.name}', '${proj.api_key}')">🗑️</button>
+                    </div>
                 `;
                 grid.appendChild(card);
             });
         }
 
+        let currentProjectId = null;
+        let currentProjectKey = null;
+
+        // Settings Modal Functions
+        async function showSettings(projectId, projectName) {
+            currentProjectId = projectId;
+            document.getElementById('settingsProjectName').textContent = `Configure thresholds for: ${projectName}`;
+
+            // Load current settings
+            try {
+                const response = await fetch(`/api/projects/${projectId}/settings`);
+                const settings = await response.json();
+                document.getElementById('fastThreshold').value = settings.fast_threshold_ms;
+                document.getElementById('slowThreshold').value = settings.slow_threshold_ms;
+                updatePreview();
+            } catch (error) {
+                console.error('Error loading settings:', error);
+            }
+
+            document.getElementById('settingsModal').style.display = 'flex';
+        }
+
+        function hideSettings() {
+            document.getElementById('settingsModal').style.display = 'none';
+        }
+
+        function updatePreview() {
+            const fast = document.getElementById('fastThreshold').value || 100;
+            const slow = document.getElementById('slowThreshold').value || 500;
+
+            document.getElementById('previewFast').textContent = fast;
+            document.getElementById('previewFast2').textContent = fast;
+            document.getElementById('previewSlow').textContent = slow;
+            document.getElementById('previewSlow2').textContent = slow;
+        }
+
+        // Update preview on input change
+        document.addEventListener('DOMContentLoaded', function () {
+            if (document.getElementById('fastThreshold')) {
+                document.getElementById('fastThreshold').addEventListener('input', updatePreview);
+                document.getElementById('slowThreshold').addEventListener('input', updatePreview);
+            }
+        });
+
+        async function saveSettings() {
+            const fast = document.getElementById('fastThreshold').value;
+            const slow = document.getElementById('slowThreshold').value;
+
+            try {
+                await fetch(`/api/projects/${currentProjectId}/settings`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: `fast_threshold_ms=${fast}&slow_threshold_ms=${slow}`
+                });
+
+                alert('✅ Settings saved successfully!');
+                hideSettings();
+            } catch (error) {
+                alert('❌ Error saving settings');
+            }
+        }
+
+        // Delete Modal Functions
+        function showDelete(projectId, projectName, apiKey) {
+            currentProjectId = projectId;
+            currentProjectKey = apiKey;
+            document.getElementById('deleteProjectName').textContent = `Project: ${projectName}`;
+            document.getElementById('deleteModal').style.display = 'flex';
+        }
+
+        function hideDelete() {
+            document.getElementById('deleteModal').style.display = 'none';
+        }
+
+        async function confirmDelete(deleteBtn) {
+            deleteBtn.disabled = true;
+            deleteBtn.textContent = 'Deleting...';
+
+            try {
+                const response = await fetch(`/api/projects/${currentProjectId}?api_key=${currentProjectKey}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    hideDelete();
+                    // Immediately remove the card from UI instead of reloading
+                    const cards = document.querySelectorAll('.project-card');
+                    cards.forEach(card => {
+                        if (card.innerHTML.includes(currentProjectKey)) {
+                            card.remove();
+                        }
+                    });
+                    alert('✅ Project deleted successfully');
+                } else {
+                    deleteBtn.disabled = false;
+                    deleteBtn.textContent = 'Delete Project';
+                    alert('❌ Error deleting project');
+                }
+            } catch (error) {
+                deleteBtn.disabled = false;
+                deleteBtn.textContent = 'Delete Project';
+                alert('❌ Error deleting project');
+            }
+        }
+
         function showNewProject() {
-            document.getElementById('newProjectModal').classList.add('active');
+            const modal = document.getElementById('newProjectModal');
+            const createBtn = document.getElementById('createBtn');
+            const projectNameInput = document.getElementById('projectName');
+
+            // Reset input and disable button
+            projectNameInput.value = '';
+            createBtn.disabled = true;
+
+            // Add input listener to enable/disable button
+            projectNameInput.oninput = function () {
+                createBtn.disabled = !this.value.trim();
+            };
+
+            modal.classList.add('active');
         }
 
         function hideNewProject() {

@@ -23,19 +23,26 @@ struct UserEntry {
         memset(username, 0, sizeof(username));
     }
 
-    UserEntry(const char* mail, const char* pass, const char* name, int id) {
-        email_hash = SimpleHash(mail);
-        user_id = id;
-        created_at = time(nullptr);
+    UserEntry(const char* mail, const char* pass, const char* name, int id) 
+        : email_hash(SimpleHash(mail)), user_id(id), created_at(time(nullptr)) {
+        memset(email, 0, sizeof(email));
+        memset(password, 0, sizeof(password));
+        memset(username, 0, sizeof(username));
         
-        strncpy(email, mail, sizeof(email) - 1);
-        email[sizeof(email) - 1] = '\0';
+        if (mail) {
+            strncpy(email, mail, sizeof(email) - 1);
+            email[sizeof(email) - 1] = '\0';
+        }
         
-        strncpy(password, pass, sizeof(password) - 1);
-        password[sizeof(password) - 1] = '\0';
+        if (pass) {
+            strncpy(password, pass, sizeof(password) - 1);
+            password[sizeof(password) - 1] = '\0';
+        }
         
-        strncpy(username, name, sizeof(username) - 1);
-        username[sizeof(username) - 1] = '\0';
+        if (name) {
+            strncpy(username, name, sizeof(username) - 1);
+            username[sizeof(username) - 1] = '\0';
+        }
     }
 
     bool operator<(const UserEntry& other) const {
@@ -71,36 +78,44 @@ struct ProjectEntry {
         memset(name, 0, sizeof(name));
     }
 
-    ProjectEntry(const char* key, int proj_id, int owner, const char* proj_name) {
-        project_id = proj_id;
-        owner_id = owner;
-        created_at = time(nullptr);
+    ProjectEntry(const char* key, int proj_id, int owner, const char* proj_name) 
+        : project_id(proj_id), owner_id(owner), created_at(time(nullptr)) {
+        memset(api_key, 0, sizeof(api_key));
+        memset(name, 0, sizeof(name));
         
-        strncpy(api_key, key, sizeof(api_key) - 1);
-        api_key[sizeof(api_key) - 1] = '\0';
+        if (key) {
+            strncpy(api_key, key, sizeof(api_key) - 1);
+            api_key[sizeof(api_key) - 1] = '\0';
+        }
         
-        strncpy(name, proj_name, sizeof(name) - 1);
-        name[sizeof(name) - 1] = '\0';
+        if (proj_name) {
+            strncpy(name, proj_name, sizeof(name) - 1);
+            name[sizeof(name) - 1] = '\0';
+        }
     }
 
     bool operator<(const ProjectEntry& other) const {
-        return strcmp(api_key, other.api_key) < 0;
+        int result = strncmp(api_key, other.api_key, sizeof(api_key));
+        return result < 0;
     }
 
     bool operator>(const ProjectEntry& other) const {
-        return strcmp(api_key, other.api_key) > 0;
+        int result = strncmp(api_key, other.api_key, sizeof(api_key));
+        return result > 0;
     }
 
     bool operator==(const ProjectEntry& other) const {
-        return strcmp(api_key, other.api_key) == 0;
+        return strncmp(api_key, other.api_key, sizeof(api_key)) == 0;
     }
 
     bool operator>=(const ProjectEntry& other) const {
-        return strcmp(api_key, other.api_key) >= 0;
+        int result = strncmp(api_key, other.api_key, sizeof(api_key));
+        return result >= 0;
     }
 
     bool operator<=(const ProjectEntry& other) const {
-        return strcmp(api_key, other.api_key) <= 0;
+        int result = strncmp(api_key, other.api_key, sizeof(api_key));
+        return result <= 0;
     }
 };
 
@@ -156,6 +171,37 @@ struct TraceEntry {
 
     bool operator<=(const TraceEntry& other) const {
         return id <= other.id;
+    }
+};
+
+struct ProjectSettings {
+    int project_id;
+    int fast_threshold_ms;
+    int slow_threshold_ms;
+
+    ProjectSettings() : project_id(0), fast_threshold_ms(100), slow_threshold_ms(500) {}
+
+    ProjectSettings(int proj_id, int fast_ms, int slow_ms) 
+        : project_id(proj_id), fast_threshold_ms(fast_ms), slow_threshold_ms(slow_ms) {}
+
+    bool operator<(const ProjectSettings& other) const {
+        return project_id < other.project_id;
+    }
+
+    bool operator>(const ProjectSettings& other) const {
+        return project_id > other.project_id;
+    }
+
+    bool operator==(const ProjectSettings& other) const {
+        return project_id == other.project_id;
+    }
+
+    bool operator>=(const ProjectSettings& other) const {
+        return project_id >= other.project_id;
+    }
+
+    bool operator<=(const ProjectSettings& other) const {
+        return project_id <= other.project_id;
     }
 };
 
