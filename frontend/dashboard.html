@@ -353,6 +353,24 @@
 
             <button id="sortOrder" onclick="toggleSortOrder()">↓ Descending</button>
 
+            <!-- Search & Filter Controls -->
+            <input type="text" id="searchFunc" placeholder="Filter function..."
+                style="padding: 8px 12px; border: 2px solid var(--border-light); border-radius: 6px; width: 150px;"
+                oninput="applyFilters()">
+            <input type="text" id="searchMsg" placeholder="Filter message..."
+                style="padding: 8px 12px; border: 2px solid var(--border-light); border-radius: 6px; width: 150px;"
+                oninput="applyFilters()">
+            <input type="number" id="minDuration" placeholder="Min ms"
+                style="padding: 8px 12px; border: 2px solid var(--border-light); border-radius: 6px; width: 90px;"
+                oninput="applyFilters()">
+            <input type="number" id="maxDuration" placeholder="Max ms"
+                style="padding: 8px 12px; border: 2px solid var(--border-light); border-radius: 6px; width: 90px;"
+                oninput="applyFilters()">
+            <button onclick="clearFilters()"
+                style="padding: 8px 12px; background: #F3F4F6; border: 2px solid var(--border-light); border-radius: 6px; cursor: pointer; font-weight: 500;">
+                Clear Filters
+            </button>
+
             <span id="queryStats"></span>
         </div>
 
@@ -575,13 +593,19 @@
             const tbody = document.getElementById('logsTable');
             const serverTime = new Date().toLocaleTimeString();
 
-            if (logs.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No logs yet</td></tr>';
+            // Store all logs for filtering
+            window.allLogs = logs;
+
+            // Apply filters
+            const filtered = filterLogs(logs);
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No logs match filters</td></tr>';
                 return;
             }
 
             tbody.innerHTML = '';
-            logs.forEach(log => {
+            filtered.forEach(log => {
                 const perf = getPerformanceClass(log.duration);
                 const row = document.createElement('tr');
                 row.innerHTML = `
@@ -598,8 +622,41 @@
             // Show query stats
             const statsDiv = document.getElementById('queryStats');
             if (statsDiv) {
-                statsDiv.textContent = `${logs.length} records • ${serverTime} • Thresholds: ${thresholds.fast}/${thresholds.slow}ms`;
+                const filterText = filtered.length < logs.length ? ` (${filtered.length} filtered)` : '';
+                statsDiv.textContent = `${logs.length} records${filterText} • ${serverTime} • Thresholds: ${thresholds.fast}/${thresholds.slow}ms`;
             }
+        }
+
+        // Filter logs based on search criteria
+        function filterLogs(logs) {
+            const funcFilter = document.getElementById('searchFunc')?.value.toLowerCase() || '';
+            const msgFilter = document.getElementById('searchMsg')?.value.toLowerCase() || '';
+            const minDur = parseInt(document.getElementById('minDuration')?.value) || 0;
+            const maxDur = parseInt(document.getElementById('maxDuration')?.value) || Infinity;
+
+            return logs.filter(log => {
+                const matchFunc = !funcFilter || log.func.toLowerCase().includes(funcFilter);
+                const matchMsg = !msgFilter || log.message.toLowerCase().includes(msgFilter);
+                const matchDuration = log.duration >= minDur && log.duration <= maxDur;
+
+                return matchFunc && matchMsg && matchDuration;
+            });
+        }
+
+        // Apply filters to current logs
+        function applyFilters() {
+            if (window.allLogs) {
+                updateTable(window.allLogs);
+            }
+        }
+
+        // Clear all filters
+        function clearFilters() {
+            document.getElementById('searchFunc').value = '';
+            document.getElementById('searchMsg').value = '';
+            document.getElementById('minDuration').value = '';
+            document.getElementById('maxDuration').value = '';
+            applyFilters();
         }
 
         fetchLogs();

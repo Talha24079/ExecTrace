@@ -49,6 +49,10 @@
             color: #374151;
         }
 
+        .btn-logout:hover {
+            background: #E5E7EB;
+        }
+
         .container {
             max-width: 1200px;
             margin: 40px auto;
@@ -64,6 +68,48 @@
         .subtitle {
             color: #6B7280;
             margin-bottom: 32px;
+        }
+
+        .create-section {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            margin-bottom: 32px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .create-form {
+            display: flex;
+            gap: 12px;
+        }
+
+        .create-form input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #E5E7EB;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .create-form input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn-primary {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
         }
 
         .projects-grid {
@@ -105,56 +151,107 @@
         .project-actions {
             display: flex;
             gap: 8px;
-            margin-top: 12px;
+            flex-wrap: wrap;
         }
 
-        .btn {
-            padding: 10px 16px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
+        .btn-small {
+            padding: 8px 12px;
+            font-size: 13px;
             border-radius: 6px;
+            border: none;
             cursor: pointer;
-            font-weight: 600;
-            flex: 1;
+            font-weight: 500;
             transition: all 0.2s;
         }
 
-        .btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+        .btn-view {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            flex: 1;
         }
 
-        .btn-secondary {
+        .btn-settings {
             background: #F3F4F6;
             color: #374151;
         }
 
-        .btn-secondary:hover {
-            background: #E5E7EB;
+        .btn-delete {
+            background: #FEE2E2;
+            color: #991B1B;
         }
 
-        .btn-small {
-            padding: 6px 12px;
-            font-size: 13px;
+        .btn-small:hover {
+            transform: translateY(-1px);
         }
 
-        .btn-danger {
-            background: #EF4444;
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
         }
 
-        .btn-danger:hover {
-            background: #DC2626;
-            box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
+        .modal.active {
+            display: flex;
         }
 
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
+        .modal-content {
+            background: white;
+            padding: 32px;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .modal-header h2 {
+            font-size: 20px;
+            color: #111827;
+        }
+
+        .btn-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #6B7280;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #374151;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #E5E7EB;
+            border-radius: 6px;
         }
 
         .threshold-preview {
-            margin: 16px 0;
+            margin: 20px 0;
             padding: 16px;
             background: #F9FAFB;
             border-radius: 8px;
@@ -194,64 +291,42 @@
             color: #991B1B;
         }
 
-        .new-project-card {
-            border: 2px dashed #D1D5DB;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            min-height: 200px;
-        }
-
-        .new-project-card:hover {
-            border-color: #667eea;
-            background: #F9FAFB;
-        }
-
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal.active {
-            display: flex;
-        }
-
-        .modal-content {
-            background: white;
-            padding: 32px;
-            border-radius: 12px;
-            width: 90%;
-            max-width: 400px;
-        }
-
-        .modal-content h2 {
-            margin-bottom: 20px;
-        }
-
-        .modal-content input {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #E5E7EB;
-            border-radius: 8px;
-            margin-bottom: 16px;
-            font-family: 'Inter', sans-serif;
-        }
-
-        .modal-actions {
+        .modal-footer {
             display: flex;
             gap: 12px;
+            justify-content: flex-end;
+            margin-top: 24px;
         }
 
-        .modal-actions button {
-            flex: 1;
+        .btn-cancel {
+            padding: 10px 20px;
+            background: #F3F4F6;
+            color: #374151;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .btn-save {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6B7280;
+        }
+
+        .empty-state h3 {
+            margin-bottom: 8px;
+            color: #374151;
         }
     </style>
 </head>
@@ -260,272 +335,265 @@
     <div class="navbar">
         <div class="logo">ExecTrace</div>
         <div class="user-info">
-            <span id="username"></span>
+            <span id="username">Loading...</span>
             <button class="btn-logout" onclick="logout()">Logout</button>
         </div>
     </div>
 
     <div class="container">
-        <h1>Projects</h1>
-        <p class="subtitle">Manage your profiling workspace</p>
+        <h1>My Projects</h1>
+        <p class="subtitle">Create and manage your ExecTrace projects</p>
 
-        <div class="projects-grid" id="projectsGrid">
-            <div class="project-card new-project-card" onclick="showNewProject()">
-                <div style="text-align: center; color: #6B7280;">
-                    <div style="font-size: 48px; margin-bottom: 8px;">+</div>
-                    <div style="font-weight: 600;">New Project</div>
-                </div>
+        <div class="create-section">
+            <h3 style="margin-bottom: 16px;">Create New Project</h3>
+            <div class="create-form">
+                <input type="text" id="newProjectName" placeholder="Enter project name..." />
+                <button class="btn-primary" onclick="createProject()">Create Project</button>
             </div>
         </div>
-    </div>
 
-    <div class="modal" id="newProjectModal">
-        <div class="modal-content">
-            <h2>Create New Project</h2>
-            <input type="text" id="projectName" placeholder="Project Name">
-            <div class="modal-actions">
-                <button class="btn btn-secondary" onclick="hideNewProject()">Cancel</button>
-                <button class="btn" id="createBtn" onclick="createProject()">Create</button>
-            </div>
-        </div>
+        <div id="projectsGrid" class="projects-grid"></div>
     </div>
 
     <!-- Settings Modal -->
-    <div class="modal" id="settingsModal">
+    <div id="settingsModal" class="modal">
         <div class="modal-content">
-            <h2>Project Settings</h2>
-            <p style="color: #6B7280; margin-bottom: 20px;" id="settingsProjectName">Configure performance thresholds
-            </p>
-
-            <div style="margin-bottom: 16px;">
-                <label style="display: block; margin-bottom: 8px; color: #374151; font-weight: 600;">Fast Threshold
-                    (ms)</label>
-                <input type="number" id="fastThreshold" placeholder="100" value="100" style="width: 100%;">
-                <p style="font-size: 12px; color: #6B7280; margin-top: 4px;">Functions faster than this are marked as
-                    Fast 🟢</p>
+            <div class="modal-header">
+                <h2>Project Settings</h2>
+                <button class="btn-close" onclick="closeSettings()">&times;</button>
             </div>
-
-            <div style="margin-bottom: 16px;">
-                <label style="display: block; margin-bottom: 8px; color: #374151; font-weight: 600;">Slow Threshold
-                    (ms)</label>
-                <input type="number" id="slowThreshold" placeholder="500" value="500" style="width: 100%;">
-                <p style="font-size: 12px; color: #6B7280; margin-top: 4px;">Functions slower than this are marked as
-                    Slow 🔴</p>
-            </div>
-
-            <div class="threshold-preview">
-                <h4>Preview Classification:</h4>
-                <div class="preview-badges">
-                    <div class="preview-badge preview-fast">🟢 Fast (&lt;<span id="previewFast">100</span>ms)</div>
-                    <div class="preview-badge preview-normal">🟡 Normal (<span id="previewFast2">100</span>-<span
-                            id="previewSlow">500</span>ms)</div>
-                    <div class="preview-badge preview-slow">🔴 Slow (&gt;<span id="previewSlow2">500</span>ms)</div>
+            <form id="settingsForm">
+                <div class="form-group">
+                    <label>Fast Threshold (ms)</label>
+                    <input type="number" id="fastThreshold" value="100" oninput="updatePreview()" />
                 </div>
-            </div>
-
-            <div class="modal-actions">
-                <button class="btn btn-secondary" onclick="hideSettings()">Cancel</button>
-                <button class="btn" onclick="saveSettings()">Save Settings</button>
-            </div>
+                <div class="form-group">
+                    <label>Normal Threshold (ms)</label>
+                    <input type="number" id="normalThreshold" value="500" oninput="updatePreview()" />
+                </div>
+                <div class="threshold-preview">
+                    <h4>Preview</h4>
+                    <div class="preview-badges" id="previewBadges"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancel" onclick="closeSettings()">Cancel</button>
+                    <button type="button" class="btn-save" onclick="saveSettings()">Save Settings</button>
+                </div>
+            </form>
         </div>
     </div>
 
     <!-- Delete Confirmation Modal -->
-    <div class="modal" id="deleteModal">
+    <div id="deleteModal" class="modal">
         <div class="modal-content">
-            <h2 style="color: #DC2626;">⚠️ Delete Project?</h2>
-            <p style="color: #6B7280; margin-bottom: 20px;">This action cannot be undone. All project data and logs will
-                be permanently deleted.</p>
-            <p style="font-weight: 600; color: #374151; margin-bottom: 20px;" id="deleteProjectName">Project: </p>
-            <div class="modal-actions">
-                <button class="btn btn-secondary" onclick="hideDelete()">Cancel</button>
-                <button class="btn btn-danger" onclick="confirmDelete(this)">Delete Project</button>
+            <div class="modal-header">
+                <h2>Delete Project</h2>
+                <button class="btn-close" onclick="closeDelete()">&times;</button>
+            </div>
+            <p style="margin-bottom: 20px; color: #6B7280;">
+                Are you sure you want to delete this project? This will remove all trace data.
+            </p>
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="closeDelete()">Cancel</button>
+                <button class="btn-small btn-delete" onclick="confirmDelete()" style="padding: 10px 20px;">Delete
+                    Project</button>
             </div>
         </div>
     </div>
 
     <script>
-        if (!localStorage.getItem('user_id')) {
+        const API_URL = 'http://localhost:9090';
+        let userId = localStorage.getItem('user_id');
+        let username = localStorage.getItem('username');
+        let currentProjectId = null;
+        let projects = [];
+
+        if (!userId) {
             window.location.href = '/login';
         }
 
-        document.getElementById('username').textContent = localStorage.getItem('username') || 'User';
+        document.getElementById('username').textContent = username || 'User';
+
+        // Load projects on page load
+        window.onload = () => {
+            loadProjects();
+        };
 
         async function loadProjects() {
-            const user_id = localStorage.getItem('user_id');
-            const response = await fetch(`/api/projects/list?user_id=${user_id}`);
-            const projects = await response.json();
+            try {
+                const response = await fetch(`${API_URL}/api/projects/${userId}`);
+                const data = await response.json();
 
+                projects = data.projects || [];
+                renderProjects();
+            } catch (e) {
+                console.error('Error loading projects:', e);
+                renderProjects();
+            }
+        }
+
+        function renderProjects() {
             const grid = document.getElementById('projectsGrid');
 
-            projects.forEach(proj => {
-                const card = document.createElement('div');
-                card.className = 'project-card';
-                card.innerHTML = `
-                    <h3>${proj.name}</h3>
-                    <div class="project-key">${proj.api_key}</div>
-                    <div class="project-actions">
-                        <button class="btn" onclick="openDashboard('${proj.api_key}')">Dashboard</button>
-                        <button class="btn btn-secondary btn-small" onclick="showSettings(${proj.id}, '${proj.name}')">⚙️ Settings</button>
-                        <button class="btn btn-danger btn-small" onclick="showDelete(${proj.id}, '${proj.name}', '${proj.api_key}')">🗑️</button>
+            if (projects.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state">
+                        <h3>No projects yet</h3>
+                        <p>Create your first project to start tracking performance</p>
                     </div>
                 `;
-                grid.appendChild(card);
-            });
-        }
-
-        let currentProjectId = null;
-        let currentProjectKey = null;
-
-        // Settings Modal Functions
-        async function showSettings(projectId, projectName) {
-            currentProjectId = projectId;
-            document.getElementById('settingsProjectName').textContent = `Configure thresholds for: ${projectName}`;
-
-            // Load current settings
-            try {
-                const response = await fetch(`/api/projects/${projectId}/settings`);
-                const settings = await response.json();
-                document.getElementById('fastThreshold').value = settings.fast_threshold_ms;
-                document.getElementById('slowThreshold').value = settings.slow_threshold_ms;
-                updatePreview();
-            } catch (error) {
-                console.error('Error loading settings:', error);
+                return;
             }
 
-            document.getElementById('settingsModal').style.display = 'flex';
+            grid.innerHTML = projects.map(p => `
+                <div class="project-card">
+                    <h3>${p.name}</h3>
+                    <div class="project-key">${p.api_key}</div>
+                    <div class="project-actions">
+                        <button class="btn-small btn-view" onclick="viewDashboard(${p.project_id})">
+                            View Dashboard
+                        </button>
+                        <button class="btn-small btn-settings" onclick="openSettings(${p.project_id})">
+                            Settings
+                        </button>
+                        <button class="btn-small btn-delete" onclick="openDelete(${p.project_id})">
+                            Delete
+                        </button>
+                    </div>
+                </div>
+            `).join('');
         }
 
-        function hideSettings() {
-            document.getElementById('settingsModal').style.display = 'none';
+        async function createProject() {
+            const name = document.getElementById('newProjectName').value;
+            if (!name) {
+                alert('Please enter a project name');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/api/project/create`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: `user_id=${userId}&name=${encodeURIComponent(name)}`
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    document.getElementById('newProjectName').value = '';
+                    // Add new project to list
+                    projects.push({
+                        project_id: data.project_id,
+                        name: name,
+                        api_key: data.api_key,
+                        fast_threshold: 100,
+                        normal_threshold: 500
+                    });
+                    renderProjects();
+                } else {
+                    alert('Error creating project');
+                }
+            } catch (e) {
+                alert('Network error');
+            }
+        }
+
+        function openSettings(projectId) {
+            currentProjectId = projectId;
+            const project = projects.find(p => p.project_id === projectId);
+            if (project) {
+                document.getElementById('fastThreshold').value = project.fast_threshold || 100;
+                document.getElementById('normalThreshold').value = project.normal_threshold || 500;
+                updatePreview();
+            }
+            document.getElementById('settingsModal').classList.add('active');
+        }
+
+        function closeSettings() {
+            document.getElementById('settingsModal').classList.remove('active');
+            currentProjectId = null;
         }
 
         function updatePreview() {
-            const fast = document.getElementById('fastThreshold').value || 100;
-            const slow = document.getElementById('slowThreshold').value || 500;
+            const fast = parseInt(document.getElementById('fastThreshold').value) || 100;
+            const normal = parseInt(document.getElementById('normalThreshold').value) || 500;
 
-            document.getElementById('previewFast').textContent = fast;
-            document.getElementById('previewFast2').textContent = fast;
-            document.getElementById('previewSlow').textContent = slow;
-            document.getElementById('previewSlow2').textContent = slow;
+            document.getElementById('previewBadges').innerHTML = `
+                <span class="preview-badge preview-fast">&lt; ${fast}ms: Fast</span>
+                <span class="preview-badge preview-normal">${fast}-${normal}ms: Normal</span>
+                <span class="preview-badge preview-slow">&gt; ${normal}ms: Slow</span>
+            `;
         }
-
-        // Update preview on input change
-        document.addEventListener('DOMContentLoaded', function () {
-            if (document.getElementById('fastThreshold')) {
-                document.getElementById('fastThreshold').addEventListener('input', updatePreview);
-                document.getElementById('slowThreshold').addEventListener('input', updatePreview);
-            }
-        });
 
         async function saveSettings() {
             const fast = document.getElementById('fastThreshold').value;
-            const slow = document.getElementById('slowThreshold').value;
+            const normal = document.getElementById('normalThreshold').value;
 
             try {
-                await fetch(`/api/projects/${currentProjectId}/settings`, {
-                    method: 'POST',
+                const response = await fetch(`${API_URL}/api/project/${currentProjectId}/settings`, {
+                    method: 'PUT',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: `fast_threshold_ms=${fast}&slow_threshold_ms=${slow}`
+                    body: `fast_threshold=${fast}&normal_threshold=${normal}`
                 });
 
-                alert('✅ Settings saved successfully!');
-                hideSettings();
-            } catch (error) {
-                alert('❌ Error saving settings');
+                if (response.ok) {
+                    // Update local copy
+                    const project = projects.find(p => p.project_id === currentProjectId);
+                    if (project) {
+                        project.fast_threshold = parseInt(fast);
+                        project.normal_threshold = parseInt(normal);
+                    }
+                    closeSettings();
+                    alert('Settings saved!');
+                } else {
+                    alert('Error saving settings');
+                }
+            } catch (e) {
+                alert('Network error');
             }
         }
 
-        // Delete Modal Functions
-        function showDelete(projectId, projectName, apiKey) {
+        function openDelete(projectId) {
             currentProjectId = projectId;
-            currentProjectKey = apiKey;
-            document.getElementById('deleteProjectName').textContent = `Project: ${projectName}`;
-            document.getElementById('deleteModal').style.display = 'flex';
+            document.getElementById('deleteModal').classList.add('active');
         }
 
-        function hideDelete() {
-            document.getElementById('deleteModal').style.display = 'none';
+        function closeDelete() {
+            document.getElementById('deleteModal').classList.remove('active');
+            currentProjectId = null;
         }
 
-        async function confirmDelete(deleteBtn) {
-            deleteBtn.disabled = true;
-            deleteBtn.textContent = 'Deleting...';
-
+        async function confirmDelete() {
             try {
-                const response = await fetch(`/api/projects/${currentProjectId}?api_key=${currentProjectKey}`, {
+                const response = await fetch(`${API_URL}/api/project/${currentProjectId}`, {
                     method: 'DELETE'
                 });
 
                 if (response.ok) {
-                    hideDelete();
-                    // Immediately remove the card from UI instead of reloading
-                    const cards = document.querySelectorAll('.project-card');
-                    cards.forEach(card => {
-                        if (card.innerHTML.includes(currentProjectKey)) {
-                            card.remove();
-                        }
-                    });
-                    alert('✅ Project deleted successfully');
+                    // Remove from local list
+                    projects = projects.filter(p => p.project_id !== currentProjectId);
+                    renderProjects();
+                    closeDelete();
                 } else {
-                    deleteBtn.disabled = false;
-                    deleteBtn.textContent = 'Delete Project';
-                    alert('❌ Error deleting project');
+                    alert('Error deleting project');
                 }
-            } catch (error) {
-                deleteBtn.disabled = false;
-                deleteBtn.textContent = 'Delete Project';
-                alert('❌ Error deleting project');
+            } catch (e) {
+                alert('Network error');
             }
         }
 
-        function showNewProject() {
-            const modal = document.getElementById('newProjectModal');
-            const createBtn = document.getElementById('createBtn');
-            const projectNameInput = document.getElementById('projectName');
-
-            // Reset input and disable button
-            projectNameInput.value = '';
-            createBtn.disabled = true;
-
-            // Add input listener to enable/disable button
-            projectNameInput.oninput = function () {
-                createBtn.disabled = !this.value.trim();
-            };
-
-            modal.classList.add('active');
-        }
-
-        function hideNewProject() {
-            document.getElementById('newProjectModal').classList.remove('active');
-        }
-
-        async function createProject() {
-            const name = document.getElementById('projectName').value;
-            if (!name) return;
-
-            const user_id = localStorage.getItem('user_id');
-            const response = await fetch('/api/projects/create', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: `user_id=${user_id}&name=${encodeURIComponent(name)}`
-            });
-
-            if (response.ok) {
-                location.reload();
+        function viewDashboard(projectId) {
+            const project = projects.find(p => p.project_id === projectId);
+            if (project) {
+                localStorage.setItem('current_project', projectId);
+                window.location.href = `/dashboard?key=${encodeURIComponent(project.api_key)}`;
             }
-        }
-
-        function openDashboard(key) {
-            window.location.href = `/dashboard?key=${key}`;
         }
 
         function logout() {
             localStorage.clear();
             window.location.href = '/login';
         }
-
-        loadProjects();
     </script>
 </body>
 
