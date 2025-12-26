@@ -453,6 +453,9 @@
                         <button class="btn-small btn-view" onclick="viewDashboard(${p.project_id})">
                             View Dashboard
                         </button>
+                        <button class="btn-small" style="background: #4F46E5; color: white;" onclick="viewAnalytics(${p.project_id})">
+                            📊 Analytics
+                        </button>
                         <button class="btn-small btn-settings" onclick="openSettings(${p.project_id})">
                             Settings
                         </button>
@@ -587,6 +590,14 @@
             if (project) {
                 localStorage.setItem('current_project', projectId);
                 window.location.href = `/dashboard?key=${encodeURIComponent(project.api_key)}`;
+            }
+        }
+
+        function viewAnalytics(projectId) {
+            const project = projects.find(p => p.project_id === projectId);
+            if (project) {
+                localStorage.setItem('current_project', projectId);
+                window.location.href = `/analytics?key=${encodeURIComponent(project.api_key)}`;
             }
         }
 

@@ -10,11 +10,19 @@ lib/
 # System files
 .DS_Store
 
-# Executables
+# Compiled binaries
 *.exe
 *.out
+et-server
+et-server-new
+test_models
+test_sdk
+win_test
 
-# Database files (We don't want to commit our test DBs)
-*.dat
+# Database files (don't commit databases)
 *.db
-data/
+backend/data/
+
+# Temporary files
+*.tmp
+*.log

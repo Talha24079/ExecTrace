@@ -67,6 +67,15 @@ public:
         auto all_entries = trace_tree->get_all_values();
         std::cout << "[ExecTraceDB] Found " << all_entries.size() << " total entries" << std::endl;
         
-        return all_entries;
+        // Filter invalid and deleted entries
+        std::vector<ExecTrace::TraceEntry> valid;
+        for (const auto& entry : all_entries) {
+            if (entry.is_valid()) {
+                valid.push_back(entry);
+            }
+        }
+        
+        std::cout << "[ExecTraceDB] Filtered to " << valid.size() << " valid entries" << std::endl;
+        return valid;
     }
 };

@@ -7,9 +7,6 @@
 #include <algorithm>
 #include "../include/Database.hpp"
 #include "../include/AuthDB.hpp"
-#include "../include/Validation.hpp"
-#include "../include/RateLimiter.hpp"
-#include "../include/Logger.hpp"
 
 // Platform-specific includes for directory operations
 #ifdef _WIN32
@@ -23,9 +20,6 @@
 // Global database pointers
 ExecTraceDB* trace_db = nullptr;
 AuthDB* auth_db = nullptr;
-
-// Global rate limiter
-RateLimiter rate_limiter;
 
 // Helper to ensure data directory exists (creates parent directories if needed)
 void ensure_directory_exists(const std::string& path) {
@@ -63,10 +57,6 @@ int main() {
     // Ensure data directory exists (create parent first)
     ensure_directory_exists("backend");
     ensure_directory_exists("backend/data");
-    
-    // Initialize logger
-    init_logger("backend/data/server.log");
-    log_info("Server", "Starting ExecTrace server...");
     
     // Initialize databases
     try {
@@ -148,22 +138,13 @@ int main() {
     
     // Log endpoint - POST only
     CROW_ROUTE(app, "/log").methods(crow::HTTPMethod::Post)
-    ([&auth_db, &rate_limiter](const crow::request& req){
+    ([&auth_db](const crow::request& req){
         std::cout << "\n[/log] ===== POST REQUEST RECEIVED =====" << std::endl;
         std::cout << "[/log] Content-Type: " << req.get_header_value("Content-Type") << std::endl;
         
         // Extract and validate API Key
         std::string api_key = req.get_header_value("X-API-Key");
         std::cout << "[/log] X-API-Key: " << (api_key.empty() ? "(not provided)" : api_key) << std::endl;
-        
-        // Rate limiting check
-        if (!rate_limiter.allow_request(api_key)) {
-            log_warn("RateLimit", "Rate limit exceeded for: " + api_key.substr(0, 12));
-            crow::response resp(429, "{\"error\":\"Rate limit exceeded. Please slow down.\"}");
-            resp.add_header("Content-Type", "application/json");
-            resp.add_header("Retry-After", "60");
-            return resp;
-        }
         
         // Get project ID from API key
         int project_id = 1; // Default fallback
@@ -221,27 +202,6 @@ int main() {
             std::cout << "[/log] Parsed params: func=" << func << ", msg=" << msg 
                       << ", version=" << version << ", duration=" << duration 
                       << ", ram=" << ram << std::endl;
-            
-            // Validate and sanitize inputs
-            func = ExecTrace::sanitize_string(func, 128);
-            msg = ExecTrace::sanitize_string(msg, 256);
-            version = ExecTrace::sanitize_string(version, 32);
-            
-            if (!ExecTrace::validate_duration(duration)) {
-                log_warn("Validation", "Invalid duration: " + std::to_string(duration));
-                crow::response resp(400, "{\"error\":\"Invalid duration (must be < 1 hour in ms)\"}");
-                resp.add_header("Content-Type", "application/json");
-                return resp;
-            }
-            
-            if (!ExecTrace::validate_ram(ram)) {
-                log_warn("Validation", "Invalid RAM: " + std::to_string(ram));
-                crow::response resp(400, "{\"error\":\"Invalid RAM (must be < 100GB in KB)\"}");
-                resp.add_header("Content-Type", "application/json");
-                return resp;
-            }
-            
-            std::cout << "[/log] Validation passed" << std::endl;
             std::cout.flush();
             
             // Log to database with validated project_id
@@ -611,50 +571,6 @@ int main() {
     std::cout << "  curl http://localhost:8080/logs/1" << std::endl;
     std::cout << std::endl;
     
-    // Stats/Aggregation Endpoint
-    CROW_ROUTE(app, "/api/stats/<int>")
-    ([](const crow::request& req, int project_id){
-        try {
-            auto all_traces = trace_db->search_by_project(project_id);
-            std::vector<ExecTrace::TraceEntry> active;
-            for (const auto& t : all_traces) {
-                if (!t.is_deleted) active.push_back(t);
-            }
-            
-            if (active.empty()) {
-                crow::response resp("{\"total\":0}");
-                resp.add_header("Content-Type", "application/json");
-                resp.add_header("Access-Control-Allow-Origin", "*");
-                return resp;
-            }
-            
-            uint64_t total_duration = 0, min_duration = UINT64_MAX, max_duration = 0;
-            uint64_t total_ram = 0;
-            for (const auto& t : active) {
-                total_duration += t.duration;
-                total_ram += t.ram_usage;
-                min_duration = std::min(min_duration, t.duration);
-                max_duration = std::max(max_duration, t.duration);
-            }
-            
-            uint64_t avg_duration = total_duration / active.size();
-            uint64_t avg_ram = total_ram / active.size();
-            
-            std::stringstream json;
-            json << "{\"total\":" << active.size() << ","
-                 << "\"duration\":{\"avg\":" << avg_duration << ",\"min\":" << min_duration << ",\"max\":" << max_duration << "},"
-                 << "\"ram\":{\"avg\":" << avg_ram << "}}";
-            
-            crow::response resp(json.str());
-            resp.add_header("Content-Type", "application/json");
-            resp.add_header("Access-Control-Allow-Origin", "*");
-            return resp;
-        } catch (const std::exception& e) {
-            return crow::response(500, "{\"error\":\"Internal server error\"}");
-        }
-    });
-    
-    log_info("Server", "Starting on port 8080...");
     // Start server - single threaded for easier debugging
     app.port(8080).run();
     

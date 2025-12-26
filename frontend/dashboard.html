@@ -371,6 +371,16 @@
                 Clear Filters
             </button>
 
+            <button onclick="exportCSV()"
+                style="padding: 8px 16px; background: #10B981; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">
+                📥 Export CSV
+            </button>
+
+            <button onclick="exportJSON()"
+                style="padding: 8px 16px; background: #4F46E5; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">
+                📥 Export JSON
+            </button>
+
             <span id="queryStats"></span>
         </div>
 
@@ -657,6 +667,53 @@
             document.getElementById('minDuration').value = '';
             document.getElementById('maxDuration').value = '';
             applyFilters();
+        }
+
+        // Export to CSV
+        function exportCSV() {
+            if (!window.allLogs || window.allLogs.length === 0) {
+                alert('No data to export');
+                return;
+            }
+
+            const filtered = filterLogs(window.allLogs);
+            const csv = [
+                ['Function', 'Message', 'Duration (ms)', 'RAM (KB)', 'Version'].join(','),
+                ...filtered.map(log => [
+                    `"${log.func}"`,
+                    `"${log.message}"`,
+                    log.duration,
+                    log.ram,
+                    `"${log.app_version}"`
+                ].join(','))
+            ].join('\n');
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `exectrace-export-${new Date().toISOString()}.csv`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+
+        // Export to JSON
+        function exportJSON() {
+            if (!window.allLogs || window.allLogs.length === 0) {
+                alert('No data to export');
+                return;
+            }
+
+            const filtered = filterLogs(window.allLogs);
+            const json = JSON.stringify(filtered, null, 2);
+
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `exectrace-export-${new Date().toISOString()}.json`;
+            a.click();
+            window.URL.revokeObjectURL(url);
         }
 
         fetchLogs();

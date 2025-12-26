@@ -49,7 +49,24 @@ public:
         user_tree = new BTree<ExecTrace::UserEntry>(user_dm);
         project_tree = new BTree<ExecTrace::ProjectEntry>(project_dm);
         
+        // Initialize ID counters from existing data
+        auto existing_users = user_tree->get_all_values();
+        for (const auto& user : existing_users) {
+            if (user.user_id >= next_user_id) {
+                next_user_id = user.user_id + 1;
+            }
+        }
+        
+        auto existing_projects = project_tree->get_all_values();
+        for (const auto& project : existing_projects) {
+            if (project.project_id >= next_project_id) {
+                next_project_id = project.project_id + 1;
+            }
+        }
+        
         std::cout << "[AuthDB] Initialized authentication database" << std::endl;
+        std::cout << "[AuthDB] Next user ID: " << next_user_id << ", Next project ID: " << next_project_id << std::endl;
+        std::cout << "[AuthDB] Found " << existing_users.size() << " users, " << existing_projects.size() << " projects" << std::endl;
     }
 
     ~AuthDB() {

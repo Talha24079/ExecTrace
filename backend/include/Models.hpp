@@ -15,8 +15,9 @@ struct TraceEntry {
     uint64_t duration;
     uint64_t ram_usage;
     time_t timestamp;
+    bool is_deleted; // Soft delete flag
 
-    TraceEntry() : id(0), project_id(0), duration(0), ram_usage(0), timestamp(0) {
+    TraceEntry() : id(0), project_id(0), duration(0), ram_usage(0), timestamp(0), is_deleted(false) {
         memset(func, 0, sizeof(func));
         memset(message, 0, sizeof(message));
         memset(app_version, 0, sizeof(app_version));
@@ -26,7 +27,7 @@ struct TraceEntry {
                const char* msg, const char* version, 
                uint64_t dur, uint64_t ram) 
         : id(entry_id), project_id(proj_id), duration(dur), 
-          ram_usage(ram), timestamp(time(nullptr)) {
+          ram_usage(ram), timestamp(time(nullptr)), is_deleted(false) {
         
         // Initialize arrays
         memset(func, 0, sizeof(func));
@@ -56,6 +57,16 @@ struct TraceEntry {
 
     bool operator==(const TraceEntry& other) const {
         return id == other.id;
+    }
+    
+    // Validate entry data
+    bool is_valid() const {
+        return id > 0 && 
+               project_id > 0 &&
+               duration < 3600000 &&  // < 1 hour in ms
+               ram_usage < 104857600 &&  // < 100GB in KB
+               func[0] != '\0' &&  // Not empty
+               !is_deleted;
     }
 
     bool operator>(const TraceEntry& other) const {
