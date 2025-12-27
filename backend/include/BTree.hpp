@@ -167,13 +167,23 @@ private:
     }
 
     void insert_non_full(Node<T>& node, const T& entry) {
+        // CHECK 1: If entry exists in this node, update it and return
+        for (auto& e : node.entries) {
+            if (e == entry) { // Relies on operator== checking the ID
+                e = entry;    // Update the existing entry
+                save_node(node);
+                std::cout << "[BTree] Updated existing entry in node " << node.page_id << std::endl;
+                return;
+            }
+        }
+
         if (node.is_leaf) {
-            
+            // Standard insertion into leaf
             node.entries.push_back(entry);
             std::sort(node.entries.begin(), node.entries.end());
             save_node(node);
         } else {
-            
+            // Find child to recurse into
             int i = node.entries.size() - 1;
             while (i >= 0 && entry < node.entries[i]) {
                 i--;

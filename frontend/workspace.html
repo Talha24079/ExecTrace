@@ -646,7 +646,7 @@
     <div class="navbar">
         <div class="logo">ExecTrace</div>
         <div id="navLinks" style="display: none; gap: 24px; align-items: center;">
-            
+
         </div>
         <div class="user-info">
             <span class="user-name" id="username">Loading...</span>
@@ -827,7 +827,8 @@
         }
 
         function copyApiKey(apiKey, button) {
-            navigator.clipboard.writeText(apiKey).then(() => {
+            // Helper to show visual feedback
+            const showSuccess = () => {
                 const originalText = button.textContent;
                 button.textContent = '✓ Copied!';
                 button.classList.add('copied');
@@ -836,10 +837,46 @@
                     button.textContent = originalText;
                     button.classList.remove('copied');
                 }, 2000);
-            }).catch(err => {
-                console.error('Failed to copy:', err);
-                alert('Failed to copy API key. Please copy manually.');
-            });
+            };
+
+            // 1. Try modern Clipboard API (Works in HTTPS/Localhost)
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(apiKey).then(showSuccess).catch(err => {
+                    console.error('Clipboard API failed, trying fallback...', err);
+                    fallbackCopy(apiKey);
+                });
+            } else {
+                // 2. Fallback for HTTP/Cloud environments
+                fallbackCopy(apiKey);
+            }
+
+            function fallbackCopy(text) {
+                try {
+                    const textArea = document.createElement("textarea");
+                    textArea.value = text;
+
+                    // Ensure it's not visible but part of the DOM
+                    textArea.style.position = "fixed";
+                    textArea.style.left = "-9999px";
+                    textArea.style.top = "0";
+
+                    document.body.appendChild(textArea);
+                    textArea.focus();
+                    textArea.select();
+
+                    const successful = document.execCommand('copy');
+                    document.body.removeChild(textArea);
+
+                    if (successful) {
+                        showSuccess();
+                    } else {
+                        alert('Clipboard access denied. Please copy manually.');
+                    }
+                } catch (err) {
+                    console.error('Fallback copy failed', err);
+                    alert('Unable to copy. Please select and copy manually.');
+                }
+            }
         }
 
         async function createProject() {
