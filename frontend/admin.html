@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - ExecTrace</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-600: #2563eb;
+            --primary-700: #1d4ed8;
+            --primary-50: #eff6ff;
+            --accent-500: #06b6d4;
+            --success-500: #10b981;
+            --error-500: #ef4444;
+            --warning-500: #f59e0b;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-tertiary: #94a3b8;
+            --bg-gradient: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%);
+            --bg-secondary: #f8fafc;
+            --border-color: #e2e8f0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-secondary);
+            min-height: 100vh;
+        }
+
+        /* Navbar */
+        .navbar {
+            background: white;
+            padding: 16px 32px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            background: var(--bg-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 24px;
+            align-items: center;
+        }
+
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            transition: color 0.3s ease;
+        }
+
+        .nav-link:hover {
+            color: var(--primary-600);
+        }
+
+        .nav-link.active {
+            color: var(--primary-600);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .user-name {
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .btn-logout {
+            padding: 10px 20px;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--text-secondary);
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .btn-logout:hover {
+            background: white;
+            border-color: var(--error-500);
+            color: var(--error-500);
+        }
+
+        /* Container */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 32px;
+        }
+
+        /* Header */
+        .header {
+            margin-bottom: 32px;
+        }
+
+        h1 {
+            font-size: 36px;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 16px;
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .stat-icon {
+            font-size: 40px;
+            margin-bottom: 12px;
+        }
+
+        /* User Management Section */
+        .section {
+            background: white;
+            padding: 32px;
+            border-radius: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border-color);
+            margin-bottom: 32px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        /* Table */
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: var(--bg-secondary);
+        }
+
+        th {
+            text-align: left;
+            padding: 12px 16px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 16px;
+            border-top: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+
+        tr:hover {
+            background: var(--bg-secondary);
+        }
+
+        .role-select {
+            padding: 8px 12px;
+            border: 2px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .role-select:focus {
+            outline: none;
+            border-color: var(--primary-600);
+        }
+
+        .role-select.admin {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            border-color: #f59e0b;
+        }
+
+        .role-select.editor {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            border-color: #3b82f6;
+        }
+
+        .role-select.user {
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 13px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-danger {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+
+        .btn-danger:hover {
+            background: var(--error-500);
+            color: white;
+        }
+
+        .btn-danger:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-active {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge-inactive {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+        }
+
+        .spinner {
+            border: 3px solid var(--border-color);
+            border-top-color: var(--primary-600);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-tertiary);
+        }
+
+        .error-message {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 16px;
+            border-radius: 8px;
+            border-left: 4px solid var(--error-500);
+            margin-bottom: 20px;
+        }
+
+        .success-message {
+            background: #d1fae5;
+            color: #065f46;
+            padding: 16px;
+            border-radius: 8px;
+            border-left: 4px solid var(--success-500);
+            margin-bottom: 20px;
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="navbar">
+        <div class="logo">ExecTrace</div>
+        <div class="nav-links">
+            <a href="/workspace" class="nav-link">📊 My Projects</a>
+            <a href="/admin" class="nav-link active">👑 Admin</a>
+        </div>
+        <div class="user-info">
+            <span class="user-name" id="username">Loading...</span>
+            <button class="btn-logout" onclick="logout()">Logout</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1>Admin Dashboard</h1>
+            <p class="subtitle">Manage users, roles, and system settings</p>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">👥</div>
+                <div class="stat-label">Total Users</div>
+                <div class="stat-value" id="totalUsers">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">👑</div>
+                <div class="stat-label">Admins</div>
+                <div class="stat-value" id="totalAdmins">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">✏️</div>
+                <div class="stat-label">Editors</div>
+                <div class="stat-value" id="totalEditors">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">📊</div>
+                <div class="stat-label">Regular Users</div>
+                <div class="stat-value" id="totalRegularUsers">-</div>
+            </div>
+        </div>
+
+        <!-- Messages -->
+        <div id="successMessage" class="success-message"></div>
+        <div id="errorMessage" class="error-message" style="display: none;"></div>
+
+        <!-- User Management -->
+        <div class="section">
+            <div class="section-header">
+                <h2 class="section-title">User Management</h2>
+            </div>
+
+            <div id="loadingState" class="loading">
+                <div class="spinner"></div>
+                <p>Loading users...</p>
+            </div>
+
+            <div id="usersTable" style="display: none;">
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Username</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Status</th>
+                                <th>Joined</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody">
+                            <!-- Users will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="emptyState" class="empty-state" style="display: none;">
+                <h3>No users found</h3>
+                <p>The system has no registered users</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:9090';
+        let currentAdminId = null;
+        let users = [];
+
+        // Check authentication and admin role
+        window.onload = () => {
+            const userId = localStorage.getItem('user_id');
+            const username = localStorage.getItem('username');
+            const role = parseInt(localStorage.getItem('user_role')) || 0;
+
+            if (!userId || !username) {
+                window.location.href = '/';
+                return;
+            }
+
+            // Check if admin
+            if (role !== 2) {
+                alert('Access Denied: Admin privileges required');
+                window.location.href = '/workspace';
+                return;
+            }
+
+            currentAdminId = parseInt(userId);
+            document.getElementById('username').textContent = username;
+
+            // Load users
+            loadUsers();
+        };
+
+        async function loadUsers() {
+            try {
+                const response = await fetch(`${API_URL}/api/admin/users?admin_user_id=${currentAdminId}`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    users = data.users || [];
+                    renderUsers();
+                    updateStats();
+                } else {
+                    showError(data.error || 'Failed to load users');
+                    document.getElementById('loadingState').style.display = 'none';
+                }
+            } catch (e) {
+                console.error('Error loading users:', e);
+                showError('Network error. Please check your connection.');
+                document.getElementById('loadingState').style.display = 'none';
+            }
+        }
+
+        function renderUsers() {
+            document.getElementById('loadingState').style.display = 'none';
+
+            if (users.length === 0) {
+                document.getElementById('emptyState').style.display = 'block';
+                document.getElementById('usersTable').style.display = 'none';
+                return;
+            }
+
+            document.getElementById('usersTable').style.display = 'block';
+            document.getElementById('emptyState').style.display = 'none';
+
+            const tbody = document.getElementById('usersTableBody');
+            tbody.innerHTML = users.map(user => {
+                const roleNames = ['user', 'editor', 'admin'];
+                const roleLabels = ['User', 'Editor', 'Admin'];
+                const isSuper = user.user_id === 1;
+                const isSelf = user.user_id === currentAdminId;
+
+                return `
+                    <tr>
+                        <td>${user.user_id}</td>
+                        <td><strong>${user.username}</strong></td>
+                        <td>${user.email}</td>
+                        <td>
+                            <select class="role-select ${roleNames[user.role]}" 
+                                    onchange="updateRole(${user.user_id}, this.value)"
+                                    ${isSuper ? 'disabled' : ''}>
+                                <option value="0" ${user.role === 0 ? 'selected' : ''}>👤 User</option>
+                                <option value="1" ${user.role === 1 ? 'selected' : ''}>✏️ Editor</option>
+                                <option value="2" ${user.role === 2 ? 'selected' : ''}>👑 Admin</option>
+                            </select>
+                            ${isSuper ? '<small style="color: var(--text-tertiary);">Super Admin</small>' : ''}
+                        </td>
+                        <td>
+                            <span class="badge ${user.is_active ? 'badge-active' : 'badge-inactive'}">
+                                ${user.is_active ? 'Active' : 'Inactive'}
+                            </span>
+                        </td>
+                        <td>${new Date(user.created_at * 1000).toLocaleDateString()}</td>
+                        <td>
+                            <button class="btn-small btn-danger" 
+                                    onclick="deactivateUser(${user.user_id}, '${user.username}')"
+                                    ${isSuper || isSelf || !user.is_active ? 'disabled' : ''}>
+                                ${isSuper ? '🔒 Protected' : isSelf ? '⚠️ Self' : '🗑️ Deactivate'}
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function updateStats() {
+            const total = users.filter(u => u.is_active).length;
+            const admins = users.filter(u => u.role === 2 && u.is_active).length;
+            const editors = users.filter(u => u.role === 1 && u.is_active).length;
+            const regularUsers = users.filter(u => u.role === 0 && u.is_active).length;
+
+            document.getElementById('totalUsers').textContent = total;
+            document.getElementById('totalAdmins').textContent = admins;
+            document.getElementById('totalEditors').textContent = editors;
+            document.getElementById('totalRegularUsers').textContent = regularUsers;
+        }
+
+        async function updateRole(userId, newRole) {
+            if (!confirm(`Are you sure you want to change this user's role?`)) {
+                loadUsers(); // Refresh to reset dropdown
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/api/admin/users/${userId}/role`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: `admin_user_id=${currentAdminId}&role=${newRole}`
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showSuccess(data.message || 'Role updated successfully');
+                    loadUsers(); // Reload to get fresh data
+                } else {
+                    showError(data.error || 'Failed to update role');
+                    loadUsers();
+                }
+            } catch (e) {
+                showError('Network error. Please try again.');
+                loadUsers();
+            }
+        }
+
+        async function deactivateUser(userId, username) {
+            if (!confirm(`Are you sure you want to deactivate "${username}"? They will no longer be able to login.`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/api/admin/users/${userId}?admin_user_id=${currentAdminId}`, {
+                    method: 'DELETE'
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showSuccess('User deactivated successfully');
+                    loadUsers();
+                } else {
+                    showError(data.error || 'Failed to deactivate user');
+                }
+            } catch (e) {
+                showError('Network error. Please try again.');
+            }
+        }
+
+        function showError(message) {
+            const errorEl = document.getElementById('errorMessage');
+            errorEl.textContent = message;
+            errorEl.style.display = 'block';
+            document.getElementById('successMessage').style.display = 'none';
+
+            setTimeout(() => {
+                errorEl.style.display = 'none';
+            }, 5000);
+        }
+
+        function showSuccess(message) {
+            const successEl = document.getElementById('successMessage');
+            successEl.textContent = message;
+            successEl.style.display = 'block';
+            document.getElementById('errorMessage').style.display = 'none';
+
+            setTimeout(() => {
+                successEl.style.display = 'none';
+            }, 3000);
+        }
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = '/';
+        }
+    </script>
+</body>
+
+</html>

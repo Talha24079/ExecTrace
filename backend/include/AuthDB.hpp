@@ -4,6 +4,7 @@
 #include <random>
 #include <sstream>
 #include <iomanip>
+#include <cstdio> // For std::remove
 
 // SHA-256 for password hashing (simple implementation)
 inline uint64_t simple_hash(const std::string& str) {
@@ -31,6 +32,8 @@ inline std::string generate_api_key() {
 
 class AuthDB {
 private:
+    std::string user_db_path;
+    std::string project_db_path;
     DiskManager* user_dm;
     DiskManager* project_dm;
     BTree<ExecTrace::UserEntry>* user_tree;
@@ -39,9 +42,29 @@ private:
     int next_user_id;
     int next_project_id;
 
+    // Helper to rebuild user tree (fixes updates/deletes)
+    void rebuild_user_tree(const std::vector<ExecTrace::UserEntry>& users) {
+        // Close and delete current tree and manager
+        delete user_tree;
+        delete user_dm;
+        
+        // Delete the physical file to ensure we start empty
+        std::remove(user_db_path.c_str());
+        
+        // Re-initialize manager and tree
+        user_dm = new DiskManager(user_db_path);
+        user_tree = new BTree<ExecTrace::UserEntry>(user_dm);
+        
+        // Re-insert all users (this writes to the file)
+        for (const auto& user : users) {
+            user_tree->insert(user);
+        }
+    }
+
 public:
     AuthDB(const std::string& user_db_file, const std::string& project_db_file) 
-        : next_user_id(1), next_project_id(1) {
+        : next_user_id(1), next_project_id(1), 
+          user_db_path(user_db_file), project_db_path(project_db_file) {
         
         user_dm = new DiskManager(user_db_file);
         project_dm = new DiskManager(project_db_file);
@@ -99,6 +122,17 @@ public:
         strncpy(user.email, email.c_str(), sizeof(user.email) - 1);
         strncpy(user.username, username.c_str(), sizeof(user.username) - 1);
         
+        // ROLE ASSIGNMENT: First user = Admin, others = User
+        if (user.user_id == 1) {
+            user.role = ExecTrace::ROLE_ADMIN;
+            std::cout << "[AuthDB] First user - assigning Admin role" << std::endl;
+        } else {
+            user.role = ExecTrace::ROLE_USER;
+        }
+        
+        user.is_active = true;
+        user.created_at = time(nullptr);
+        
         // Hash password (simple hash for demo)
         uint64_t pwd_hash = simple_hash(password);
         snprintf(user.password_hash, sizeof(user.password_hash), "%016lx", pwd_hash);
@@ -106,7 +140,10 @@ public:
         user_tree->insert(user);
         out_user_id = user.user_id;
         
-        std::cout << "[AuthDB] Registered user: " << username << " (ID: " << user.user_id << ")" << std::endl;
+        const char* role_name = (user.role == ExecTrace::ROLE_ADMIN) ? "Admin" : 
+                                (user.role == ExecTrace::ROLE_EDITOR) ? "Editor" : "User";
+        std::cout << "[AuthDB] Registered user: " << username 
+                  << " (ID: " << user.user_id << ", Role: " << role_name << ")" << std::endl;
         return true;
     }
 
@@ -135,8 +172,15 @@ public:
             return false;
         }
         
+        // Check if user is active
+        if (!results[0].is_active) {
+            std::cout << "[AuthDB] Login failed: user account is deactivated" << std::endl;
+            return false;
+        }
+        
         out_user = results[0];
-        std::cout << "[AuthDB] Login successful: " << out_user.username << std::endl;
+        std::cout << "[AuthDB] Login successful: " << out_user.username 
+                  << " (Role: " << out_user.role << ")" << std::endl;
         return true;
     }
 
@@ -176,7 +220,7 @@ public:
         auto all_projects = project_tree->get_all_values();
         
         for (const auto& project : all_projects) {
-            if (strcmp(project.api_key, api_key.c_str()) == 0) {
+            if (strcmp(project.api_key, api_key.c_str()) == 0 && !project.is_deleted) {
                 out_project_id = project.project_id;
                 std::cout << "[AuthDB] API key validated: Project " << out_project_id << std::endl;
                 return true;
@@ -196,9 +240,9 @@ public:
         // Get all projects
         auto all_projects = project_tree->get_all_values();
         
-        // Filter by user_id
+        // Filter by user_id and exclude deleted projects
         for (const auto& project : all_projects) {
-            if (project.user_id == user_id) {
+            if (project.user_id == user_id && !project.is_deleted) {
                 user_projects.push_back(project);
             }
         }
@@ -238,7 +282,7 @@ public:
     bool delete_project(int project_id) {
         std::lock_guard<std::mutex> lock(auth_mutex);
         
-        // Find project to verify it exists
+        // Find project
         ExecTrace::ProjectEntry search_key;
         search_key.project_id = project_id;
         auto results = project_tree->search(search_key);
@@ -248,10 +292,205 @@ public:
             return false;
         }
         
-        // Note: B-Tree doesn't have delete yet, so we mark it as deleted
-        // For now, just log that we would delete it
-        // TODO: Implement B-Tree delete operation
-        std::cout << "[AuthDB] Project " << project_id << " marked for deletion (full delete not implemented)" << std::endl;
+        // Get the project
+        ExecTrace::ProjectEntry project = results[0];
+        
+        // Mark as deleted
+        project.is_deleted = true;
+        
+        // Re-insert to update (B-Tree insert will overwrite)
+        project_tree->insert(project);
+        
+        std::cout << "[AuthDB] Project " << project_id << " marked as deleted" << std::endl;
+        return true;
+    }
+    
+    // ========== PERMISSION CHECKING SYSTEM ==========
+    
+    // Check if user has permission for an action
+    bool has_permission(int user_id, const std::string& action, int resource_id = 0) {
+        std::lock_guard<std::mutex> lock(auth_mutex);
+        
+        // Get user
+        auto all_users = user_tree->get_all_values();
+        ExecTrace::UserEntry* user = nullptr;
+        
+        for (auto& u : all_users) {
+            if (u.user_id == user_id && u.is_active) {
+                user = &u;
+                break;
+            }
+        }
+        
+        if (!user) {
+            std::cout << "[AuthDB] Permission denied: user not found or inactive" << std::endl;
+            return false;
+        }
+        
+        // Admins have all permissions
+        if (user->role == ExecTrace::ROLE_ADMIN) {
+            return true;
+        }
+        
+        // Check specific permissions based on action
+        if (action == "view_project" || action == "edit_project") {
+            return is_project_owner(user_id, resource_id);
+        }
+        
+        if (action == "delete_project") {
+            return is_project_owner(user_id, resource_id);
+        }
+        
+        if (action == "manage_users" || action == "assign_roles") {
+            return false; // Only admins can do this
+        }
+        
+        return false;
+    }
+    
+    // Check if user owns a project
+    bool is_project_owner(int user_id, int project_id) {
+        auto all_projects = project_tree->get_all_values();
+        for (const auto& project : all_projects) {
+            if (project.project_id == project_id && 
+                project.user_id == user_id && 
+                !project.is_deleted) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    // Get user by ID
+    bool get_user_by_id(int user_id, ExecTrace::UserEntry& out_user) {
+        std::lock_guard<std::mutex> lock(auth_mutex);
+        
+        auto all_users = user_tree->get_all_values();
+        for (const auto& user : all_users) {
+            if (user.user_id == user_id && user.is_active) {
+                out_user = user;
+                return true;
+            }
+        }
+        
+        std::cout << "[AuthDB] User not found: " << user_id << std::endl;
+        return false;
+    }
+    
+    // ========== ADMIN USER MANAGEMENT ==========
+    
+    // Get all users (Admin only)
+    std::vector<ExecTrace::UserEntry> get_all_users() {
+        std::lock_guard<std::mutex> lock(auth_mutex);
+        
+        std::vector<ExecTrace::UserEntry> active_users;
+        auto all_users = user_tree->get_all_values();
+        
+        for (const auto& user : all_users) {
+            if (user.is_active) {
+                active_users.push_back(user);
+            }
+        }
+        
+        std::cout << "[AuthDB] Found " << active_users.size() << " active users" << std::endl;
+        return active_users;
+    }
+    
+    // Update user role (Admin only)
+    bool update_user_role(int user_id, int new_role) {
+        std::lock_guard<std::mutex> lock(auth_mutex);
+        
+        // Prevent changing the first user (super admin)
+        if (user_id == 1) {
+            std::cout << "[AuthDB] Cannot change role of super admin (user_id=1)" << std::endl;
+            return false;
+        }
+        
+        // Get all users
+        auto all_users = user_tree->get_all_values();
+        bool found = false;
+        ExecTrace::UserEntry updated_user;
+        int old_role = 0;
+        
+        // Find the user and update their role
+        for (auto& user : all_users) {
+            if (user.user_id == user_id) {
+                found = true;
+                old_role = user.role;
+                user.role = new_role;
+                updated_user = user;
+                break;
+            }
+        }
+        
+        if (!found) {
+            std::cout << "[AuthDB] User not found: " << user_id << std::endl;
+            return false;
+        }
+        
+        // Rebuild the tree with updated user info
+        std::vector<ExecTrace::UserEntry> new_user_list;
+        for (const auto& user : all_users) {
+            if (user.user_id == user_id) {
+                new_user_list.push_back(updated_user);
+            } else {
+                new_user_list.push_back(user);
+            }
+        }
+        
+        rebuild_user_tree(new_user_list);
+        
+        const char* role_names[] = {"User", "Editor", "Admin"};
+        std::cout << "[AuthDB] Updated user " << user_id 
+                  << " role from " << role_names[old_role] 
+                  << " to " << role_names[new_role] << std::endl;
+        
+        return true;
+    }
+    
+    // Deactivate user (soft delete)
+    bool deactivate_user(int user_id) {
+        std::lock_guard<std::mutex> lock(auth_mutex);
+        
+        // Prevent deactivating super admin
+        if (user_id == 1) {
+            std::cout << "[AuthDB] Cannot deactivate super admin (user_id=1)" << std::endl;
+            return false;
+        }
+        
+        // Get all users
+        auto all_users = user_tree->get_all_values();
+        bool found = false;
+        ExecTrace::UserEntry deactivated_user;
+        
+        // Find the user and deactivate
+        for (auto& user : all_users) {
+            if (user.user_id == user_id) {
+                found = true;
+                user.is_active = false;
+                deactivated_user = user;
+                break;
+            }
+        }
+        
+        if (!found) {
+            return false;
+        }
+        
+        // Rebuild the tree with deactivated user
+        std::vector<ExecTrace::UserEntry> new_user_list;
+        for (const auto& user : all_users) {
+            if (user.user_id == user_id) {
+                new_user_list.push_back(deactivated_user);
+            } else {
+                new_user_list.push_back(user);
+            }
+        }
+        
+        rebuild_user_tree(new_user_list);
+        
+        std::cout << "[AuthDB] Deactivated user: " << deactivated_user.username << std::endl;
+        
         return true;
     }
 };

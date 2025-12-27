@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Workspace - ExecTrace</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -13,24 +13,48 @@
             box-sizing: border-box;
         }
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background: #F9FAFB;
+        :root {
+            --primary-600: #2563eb;
+            --primary-700: #1d4ed8;
+            --primary-50: #eff6ff;
+            --accent-500: #06b6d4;
+            --success-500: #10b981;
+            --error-500: #ef4444;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-tertiary: #64748b;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --border-color: #e2e8f0;
         }
 
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-secondary);
+            min-height: 100vh;
+        }
+
+        /* Navigation Bar */
         .navbar {
             background: white;
             padding: 16px 32px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
             display: flex;
             justify-content: space-between;
             align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
         }
 
         .logo {
-            font-size: 20px;
+            font-size: 22px;
             font-weight: 700;
-            color: #667eea;
+            background: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .user-info {
@@ -39,43 +63,140 @@
             gap: 16px;
         }
 
-        .btn-logout {
+        .user-name {
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .role-badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .role-admin {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+        }
+
+        .role-editor {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+        }
+
+        .role-user {
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+        }
+
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            transition: color 0.3s ease;
             padding: 8px 16px;
-            background: #F3F4F6;
-            border: none;
             border-radius: 6px;
+        }
+
+        .nav-link:hover {
+            color: var(--primary-600);
+            background: var(--bg-secondary);
+        }
+
+        .btn-logout {
+            padding: 10px 20px;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
             cursor: pointer;
-            font-weight: 500;
-            color: #374151;
+            font-weight: 600;
+            color: var(--text-secondary);
+            transition: all 0.3s ease;
+            font-size: 14px;
         }
 
         .btn-logout:hover {
-            background: #E5E7EB;
+            background: white;
+            border-color: var(--primary-600);
+            color: var(--primary-600);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
         }
 
+        /* Container */
         .container {
-            max-width: 1200px;
-            margin: 40px auto;
-            padding: 0 32px;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 32px;
+        }
+
+        /* Header */
+        .header {
+            margin-bottom: 40px;
+            animation: fadeIn 0.6s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         h1 {
-            font-size: 32px;
-            color: #111827;
+            font-size: 36px;
+            color: var(--text-primary);
             margin-bottom: 8px;
+            font-weight: 700;
         }
 
         .subtitle {
-            color: #6B7280;
-            margin-bottom: 32px;
+            color: var(--text-secondary);
+            font-size: 16px;
         }
 
+        /* Create Section */
         .create-section {
             background: white;
-            padding: 24px;
-            border-radius: 12px;
-            margin-bottom: 32px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            padding: 32px;
+            border-radius: 16px;
+            margin-bottom: 40px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border-color);
+            animation: slideUp 0.6s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .create-section h3 {
+            font-size: 18px;
+            color: var(--text-primary);
+            margin-bottom: 20px;
+            font-weight: 600;
         }
 
         .create-form {
@@ -85,103 +206,205 @@
 
         .create-form input {
             flex: 1;
-            padding: 12px 16px;
-            border: 2px solid #E5E7EB;
-            border-radius: 6px;
-            font-size: 14px;
+            padding: 14px 16px;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 15px;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.3s ease;
         }
 
         .create-form input:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: var(--primary-600);
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
         }
 
         .btn-primary {
-            padding: 12px 24px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 14px 28px;
+            background: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%);
             color: white;
             border: none;
-            border-radius: 6px;
+            border-radius: 10px;
             cursor: pointer;
             font-weight: 600;
-            transition: all 0.2s;
+            font-size: 15px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
+            white-space: nowrap;
         }
 
         .btn-primary:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(37, 99, 235, 0.4);
         }
 
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Projects Grid */
         .projects-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 24px;
+            animation: fadeIn 0.8s ease;
         }
 
         .project-card {
             background: white;
-            padding: 24px;
-            border-radius: 12px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            transition: transform 0.2s, box-shadow 0.2s;
+            padding: 28px;
+            border-radius: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .project-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #2563eb 0%, #06b6d4 100%);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
         }
 
         .project-card:hover {
             transform: translateY(-4px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
+        }
+
+        .project-card:hover::before {
+            transform: scaleX(1);
         }
 
         .project-card h3 {
-            color: #111827;
-            font-size: 18px;
-            margin-bottom: 12px;
+            color: var(--text-primary);
+            font-size: 20px;
+            margin-bottom: 16px;
+            font-weight: 600;
         }
 
         .project-key {
-            background: #F3F4F6;
-            padding: 8px 12px;
-            border-radius: 6px;
+            background: var(--bg-secondary);
+            padding: 12px 16px;
+            border-radius: 8px;
             font-family: 'Courier New', monospace;
-            font-size: 12px;
-            color: #6B7280;
-            margin-bottom: 16px;
-            word-break: break-all;
-        }
-
-        .project-actions {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-
-        .btn-small {
-            padding: 8px 12px;
             font-size: 13px;
-            border-radius: 6px;
-            border: none;
-            cursor: pointer;
-            font-weight: 500;
-            transition: all 0.2s;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+            word-break: break-all;
+            border: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            justify-content: space-between;
         }
 
-        .btn-view {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+        .api-key-text {
             flex: 1;
         }
 
+        .btn-copy {
+            background: var(--primary-600);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .btn-copy:hover {
+            background: var(--primary-700);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(37, 99, 235, 0.3);
+        }
+
+        .btn-copy:active {
+            transform: translateY(0);
+        }
+
+        .btn-copy.copied {
+            background: var(--success-500);
+        }
+
+
+        .project-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .btn-small {
+            padding: 10px 16px;
+            font-size: 14px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .btn-view {
+            background: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%);
+            color: white;
+            grid-column: span 2;
+        }
+
+        .btn-view:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(37, 99, 235, 0.3);
+        }
+
+        .btn-analytics {
+            background: var(--primary-50);
+            color: var(--primary-600);
+            border: 2px solid var(--primary-600);
+        }
+
+        .btn-analytics:hover {
+            background: var(--primary-600);
+            color: white;
+        }
+
         .btn-settings {
-            background: #F3F4F6;
-            color: #374151;
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            border: 2px solid var(--border-color);
+        }
+
+        .btn-settings:hover {
+            background: white;
+            border-color: var(--text-primary);
+            color: var(--text-primary);
         }
 
         .btn-delete {
-            background: #FEE2E2;
-            color: #991B1B;
+            background: #fef2f2;
+            color: #991b1b;
+            border: 2px solid #fca5a5;
+            grid-column: span 2;
         }
 
-        .btn-small:hover {
-            transform: translateY(-1px);
+        .btn-delete:hover {
+            background: var(--error-500);
+            color: white;
+            border-color: var(--error-500);
         }
 
         /* Modal Styles */
@@ -196,71 +419,113 @@
             z-index: 1000;
             justify-content: center;
             align-items: center;
+            backdrop-filter: blur(4px);
         }
 
         .modal.active {
             display: flex;
+            animation: fadeIn 0.3s ease;
         }
 
         .modal-content {
             background: white;
-            padding: 32px;
-            border-radius: 12px;
-            max-width: 500px;
+            padding: 40px;
+            border-radius: 20px;
+            max-width: 520px;
             width: 90%;
             max-height: 90vh;
             overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: modalSlide 0.4s ease;
+        }
+
+        @keyframes modalSlide {
+            from {
+                opacity: 0;
+                transform: translateY(-50px) scale(0.9);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
         }
 
         .modal-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 24px;
+            margin-bottom: 28px;
         }
 
         .modal-header h2 {
-            font-size: 20px;
-            color: #111827;
+            font-size: 24px;
+            color: var(--text-primary);
+            font-weight: 700;
         }
 
         .btn-close {
-            background: none;
+            background: var(--bg-secondary);
             border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
             font-size: 24px;
             cursor: pointer;
-            color: #6B7280;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .btn-close:hover {
+            background: var(--error-500);
+            color: white;
+            transform: rotate(90deg);
         }
 
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 24px;
         }
 
         .form-group label {
             display: block;
             margin-bottom: 8px;
-            font-weight: 500;
-            color: #374151;
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 14px;
         }
 
         .form-group input {
             width: 100%;
-            padding: 10px 12px;
-            border: 2px solid #E5E7EB;
-            border-radius: 6px;
+            padding: 12px 16px;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 15px;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary-600);
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
         }
 
         .threshold-preview {
-            margin: 20px 0;
-            padding: 16px;
-            background: #F9FAFB;
-            border-radius: 8px;
+            margin: 24px 0;
+            padding: 20px;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
         }
 
         .threshold-preview h4 {
-            margin-bottom: 12px;
-            color: #374151;
+            margin-bottom: 16px;
+            color: var(--text-primary);
             font-size: 14px;
+            font-weight: 600;
         }
 
         .preview-badges {
@@ -270,63 +535,110 @@
         }
 
         .preview-badge {
-            padding: 6px 12px;
-            border-radius: 12px;
-            font-size: 12px;
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-size: 13px;
             font-weight: 600;
         }
 
         .preview-fast {
-            background: #D1FAE5;
-            color: #065F46;
+            background: #d1fae5;
+            color: #065f46;
         }
 
         .preview-normal {
-            background: #FEF3C7;
-            color: #92400E;
+            background: #fef3c7;
+            color: #92400e;
         }
 
         .preview-slow {
-            background: #FEE2E2;
-            color: #991B1B;
+            background: #fee2e2;
+            color: #991b1b;
         }
 
         .modal-footer {
             display: flex;
             gap: 12px;
             justify-content: flex-end;
-            margin-top: 24px;
+            margin-top: 28px;
         }
 
         .btn-cancel {
-            padding: 10px 20px;
-            background: #F3F4F6;
-            color: #374151;
-            border: none;
-            border-radius: 6px;
+            padding: 12px 24px;
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
             cursor: pointer;
-            font-weight: 500;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-cancel:hover {
+            background: white;
+            border-color: var(--text-primary);
+            color: var(--text-primary);
         }
 
         .btn-save {
-            padding: 10px 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%);
             color: white;
             border: none;
-            border-radius: 6px;
+            border-radius: 8px;
             cursor: pointer;
             font-weight: 600;
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .btn-save:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(37, 99, 235, 0.4);
         }
 
         .empty-state {
             text-align: center;
-            padding: 60px 20px;
-            color: #6B7280;
+            padding: 80px 20px;
+            color: var(--text-tertiary);
+            grid-column: 1 / -1;
         }
 
         .empty-state h3 {
-            margin-bottom: 8px;
-            color: #374151;
+            margin-bottom: 12px;
+            color: var(--text-secondary);
+            font-size: 20px;
+        }
+
+        .empty-state p {
+            font-size: 15px;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .navbar {
+                padding: 12px 20px;
+            }
+
+            .container {
+                padding: 24px 20px;
+            }
+
+            h1 {
+                font-size: 28px;
+            }
+
+            .create-form {
+                flex-direction: column;
+            }
+
+            .projects-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .modal-content {
+                padding: 28px 24px;
+            }
         }
     </style>
 </head>
@@ -334,21 +646,28 @@
 <body>
     <div class="navbar">
         <div class="logo">ExecTrace</div>
+        <div id="navLinks" style="display: none; gap: 24px; align-items: center;">
+            <!-- Admin link will be added here if user is admin -->
+        </div>
         <div class="user-info">
-            <span id="username">Loading...</span>
+            <span class="user-name" id="username">Loading...</span>
             <button class="btn-logout" onclick="logout()">Logout</button>
         </div>
     </div>
 
     <div class="container">
-        <h1>My Projects</h1>
-        <p class="subtitle">Create and manage your ExecTrace projects</p>
+        <div class="header">
+            <h1>My Projects</h1>
+            <p class="subtitle">Create and manage your performance monitoring projects</p>
+        </div>
 
         <div class="create-section">
-            <h3 style="margin-bottom: 16px;">Create New Project</h3>
+            <h3>Create New Project</h3>
             <div class="create-form">
-                <input type="text" id="newProjectName" placeholder="Enter project name..." />
-                <button class="btn-primary" onclick="createProject()">Create Project</button>
+                <input type="text" id="newProjectName" placeholder="Enter project name (e.g., Production API)" />
+                <button class="btn-primary" onclick="createProject()" id="createBtn">
+                    + Create Project
+                </button>
             </div>
         </div>
 
@@ -359,20 +678,20 @@
     <div id="settingsModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Project Settings</h2>
-                <button class="btn-close" onclick="closeSettings()">&times;</button>
+                <h2>⚙️ Project Settings</h2>
+                <button class="btn-close" onclick="closeSettings()">×</button>
             </div>
             <form id="settingsForm">
                 <div class="form-group">
                     <label>Fast Threshold (ms)</label>
-                    <input type="number" id="fastThreshold" value="100" oninput="updatePreview()" />
+                    <input type="number" id="fastThreshold" value="100" min="0" oninput="updatePreview()" />
                 </div>
                 <div class="form-group">
-                    <label>Normal Threshold (ms)</label>
-                    <input type="number" id="normalThreshold" value="500" oninput="updatePreview()" />
+                    <label>Slow Threshold (ms)</label>
+                    <input type="number" id="normalThreshold" value="500" min="0" oninput="updatePreview()" />
                 </div>
                 <div class="threshold-preview">
-                    <h4>Preview</h4>
+                    <h4>Performance Classification Preview</h4>
                     <div class="preview-badges" id="previewBadges"></div>
                 </div>
                 <div class="modal-footer">
@@ -387,35 +706,76 @@
     <div id="deleteModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Delete Project</h2>
-                <button class="btn-close" onclick="closeDelete()">&times;</button>
+                <h2>🗑️ Delete Project</h2>
+                <button class="btn-close" onclick="closeDelete()">×</button>
             </div>
-            <p style="margin-bottom: 20px; color: #6B7280;">
-                Are you sure you want to delete this project? This will remove all trace data.
+            <p style="margin-bottom: 24px; color: var(--text-secondary); line-height: 1.6;">
+                Are you sure you want to delete this project? This action cannot be undone and will permanently remove
+                all trace data.
             </p>
             <div class="modal-footer">
                 <button class="btn-cancel" onclick="closeDelete()">Cancel</button>
-                <button class="btn-small btn-delete" onclick="confirmDelete()" style="padding: 10px 20px;">Delete
-                    Project</button>
+                <button class="btn-small btn-delete" onclick="confirmDelete()" style="padding: 12px 24px;">
+                    Delete Project
+                </button>
             </div>
         </div>
     </div>
 
     <script>
         const API_URL = 'http://localhost:9090';
-        let userId = localStorage.getItem('user_id');
-        let username = localStorage.getItem('username');
-        let currentProjectId = null;
         let projects = [];
+        let currentProjectId = null;
+        let userId = null;
+        let username = null;
 
-        if (!userId) {
-            window.location.href = '/login';
-        }
-
-        document.getElementById('username').textContent = username || 'User';
-
-        // Load projects on page load
         window.onload = () => {
+            // FIXED: Better retrieval and validation
+            userId = localStorage.getItem('user_id');
+            username = localStorage.getItem('username');
+
+            console.log('Checking Auth:', { userId, username });
+
+            // FIXED: Explicitly check for "undefined" string and invalid values
+            if (!userId || userId === 'null' || userId === 'undefined') {
+                console.warn('Authentication failed: Invalid User ID');
+                // Optional: Clear bad data so we don't get stuck with "undefined" forever
+                localStorage.removeItem('user_id');
+
+                // Redirect
+                window.location.href = '/';
+                return;
+            }
+
+            // Update UI with username - with fallback and debugging
+            const storedUsername = localStorage.getItem('username');
+            const storedRole = parseInt(localStorage.getItem('user_role')) || 0;
+            const displayName = username || storedUsername || 'User';
+
+            console.log('Username display:', { username, storedUsername, displayName, role: storedRole });
+
+            const usernameElement = document.getElementById('username');
+            if (usernameElement) {
+                const roleNames = ['User', 'Editor', 'Admin'];
+                const roleClasses = ['role-user', 'role-editor', 'role-admin'];
+                const roleIcons = ['👤', '✏️', '👑'];
+
+                usernameElement.innerHTML = `
+                    ${displayName}
+                    <span class="role-badge ${roleClasses[storedRole]}">${roleIcons[storedRole]} ${roleNames[storedRole]}</span>
+                `;
+            } else {
+                console.error('Username element not found!');
+            }
+
+            // Show admin link if user is admin
+            if (storedRole === 2) {
+                const navLinks = document.getElementById('navLinks');
+                navLinks.style.display = 'flex';
+                navLinks.innerHTML = '<a href="/admin" class="nav-link">👑 Admin Dashboard</a>';
+            }
+
+            // Load projects
             loadProjects();
         };
 
@@ -423,7 +783,6 @@
             try {
                 const response = await fetch(`${API_URL}/api/projects/${userId}`);
                 const data = await response.json();
-
                 projects = data.projects || [];
                 renderProjects();
             } catch (e) {
@@ -438,8 +797,8 @@
             if (projects.length === 0) {
                 grid.innerHTML = `
                     <div class="empty-state">
-                        <h3>No projects yet</h3>
-                        <p>Create your first project to start tracking performance</p>
+                        <h3>📊 No projects yet</h3>
+                        <p>Create your first project to start tracking performance metrics</p>
                     </div>
                 `;
                 return;
@@ -448,31 +807,55 @@
             grid.innerHTML = projects.map(p => `
                 <div class="project-card">
                     <h3>${p.name}</h3>
-                    <div class="project-key">${p.api_key}</div>
+                    <div class="project-key">
+                        <span class="api-key-text">${p.api_key}</span>
+                        <button class="btn-copy" onclick="copyApiKey('${p.api_key}', this)">📋 Copy</button>
+                    </div>
                     <div class="project-actions">
-                        <button class="btn-small btn-view" onclick="viewDashboard(${p.project_id})">
-                            View Dashboard
+                        <button class="btn-small btn-view" onclick="viewDashboard(${p.project_id}, '${p.api_key}')">
+                            📈 Dashboard
                         </button>
-                        <button class="btn-small" style="background: #4F46E5; color: white;" onclick="viewAnalytics(${p.project_id})">
+                        <button class="btn-small btn-analytics" onclick="viewAnalytics(${p.project_id}, '${p.api_key}')">
                             📊 Analytics
                         </button>
                         <button class="btn-small btn-settings" onclick="openSettings(${p.project_id})">
-                            Settings
+                            ⚙️ Settings
                         </button>
                         <button class="btn-small btn-delete" onclick="openDelete(${p.project_id})">
-                            Delete
+                            🗑️ Delete
                         </button>
                     </div>
                 </div>
             `).join('');
         }
 
+        function copyApiKey(apiKey, button) {
+            navigator.clipboard.writeText(apiKey).then(() => {
+                const originalText = button.textContent;
+                button.textContent = '✓ Copied!';
+                button.classList.add('copied');
+
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.classList.remove('copied');
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+                alert('Failed to copy API key. Please copy manually.');
+            });
+        }
+
         async function createProject() {
-            const name = document.getElementById('newProjectName').value;
+            const name = document.getElementById('newProjectName').value.trim();
+            const btn = document.getElementById('createBtn');
+
             if (!name) {
                 alert('Please enter a project name');
                 return;
             }
+
+            btn.disabled = true;
+            btn.textContent = 'Creating...';
 
             try {
                 const response = await fetch(`${API_URL}/api/project/create`, {
@@ -484,20 +867,16 @@
                 const data = await response.json();
                 if (response.ok) {
                     document.getElementById('newProjectName').value = '';
-                    // Add new project to list
-                    projects.push({
-                        project_id: data.project_id,
-                        name: name,
-                        api_key: data.api_key,
-                        fast_threshold: 100,
-                        normal_threshold: 500
-                    });
-                    renderProjects();
+                    // Reload strictly to ensure state sync
+                    loadProjects();
                 } else {
-                    alert('Error creating project');
+                    alert('Error creating project: ' + (data.error || 'Unknown error'));
                 }
             } catch (e) {
                 alert('Network error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '+ Create Project';
             }
         }
 
@@ -522,9 +901,9 @@
             const normal = parseInt(document.getElementById('normalThreshold').value) || 500;
 
             document.getElementById('previewBadges').innerHTML = `
-                <span class="preview-badge preview-fast">&lt; ${fast}ms: Fast</span>
-                <span class="preview-badge preview-normal">${fast}-${normal}ms: Normal</span>
-                <span class="preview-badge preview-slow">&gt; ${normal}ms: Slow</span>
+                <span class="preview-badge preview-fast">🟢 &lt; ${fast}ms: Fast</span>
+                <span class="preview-badge preview-normal">🟡 ${fast}-${normal}ms: Normal</span>
+                <span class="preview-badge preview-slow">🔴 &gt; ${normal}ms: Slow</span>
             `;
         }
 
@@ -540,14 +919,14 @@
                 });
 
                 if (response.ok) {
-                    // Update local copy
+                    // Update local state directly
                     const project = projects.find(p => p.project_id === currentProjectId);
                     if (project) {
                         project.fast_threshold = parseInt(fast);
                         project.normal_threshold = parseInt(normal);
                     }
                     closeSettings();
-                    alert('Settings saved!');
+                    alert('✓ Settings saved successfully!');
                 } else {
                     alert('Error saving settings');
                 }
@@ -573,7 +952,6 @@
                 });
 
                 if (response.ok) {
-                    // Remove from local list
                     projects = projects.filter(p => p.project_id !== currentProjectId);
                     renderProjects();
                     closeDelete();
@@ -585,20 +963,13 @@
             }
         }
 
-        function viewDashboard(projectId) {
-            const project = projects.find(p => p.project_id === projectId);
-            if (project) {
-                localStorage.setItem('current_project', projectId);
-                window.location.href = `/dashboard?key=${encodeURIComponent(project.api_key)}`;
-            }
+        // FIXED: Passing API Key directly to avoid localStorage race conditions
+        function viewDashboard(projectId, key) {
+            window.location.href = `/dashboard?key=${encodeURIComponent(key)}`;
         }
 
-        function viewAnalytics(projectId) {
-            const project = projects.find(p => p.project_id === projectId);
-            if (project) {
-                localStorage.setItem('current_project', projectId);
-                window.location.href = `/analytics?key=${encodeURIComponent(project.api_key)}`;
-            }
+        function viewAnalytics(projectId, key) {
+            window.location.href = `/analytics?key=${encodeURIComponent(key)}`;
         }
 
         function logout() {

@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Analytics - ExecTrace</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <style>
         * {
@@ -13,149 +14,447 @@
             box-sizing: border-box;
         }
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background: #F9FAFB;
+        :root {
+            --primary-600: #2563eb;
+            --primary-700: #1d4ed8;
+            --primary-50: #eff6ff;
+            --accent-500: #06b6d4;
+            --success-500: #10b981;
+            --warning-500: #f59e0b;
+            --error-500: #ef4444;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-tertiary: #64748b;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --border-color: #e2e8f0;
         }
 
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-secondary);
+            min-height: 100vh;
+        }
+
+        /* Navigation Bar */
         .navbar {
             background: white;
             padding: 16px 32px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
             display: flex;
             justify-content: space-between;
             align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
         }
 
         .logo {
-            font-size: 20px;
+            font-size: 22px;
             font-weight: 700;
-            color: #4F46E5;
+            background: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            cursor: pointer;
         }
 
         .nav-links {
             display: flex;
-            gap: 16px;
+            gap: 8px;
+            align-items: center;
         }
 
         .nav-link {
-            padding: 8px 16px;
+            padding: 10px 16px;
             text-decoration: none;
-            color: #6B7280;
-            border-radius: 6px;
-            transition: all 0.2s;
+            color: var(--text-secondary);
+            border-radius: 8px;
+            transition: all 0.3s;
+            font-weight: 600;
+            font-size: 14px;
         }
 
-        .nav-link:hover, .nav-link.active {
-            background: #EEF2FF;
-            color: #4F46E5;
+        .nav-link:hover {
+            background: var(--primary-50);
+            color: var(--primary-600);
         }
 
+        .nav-link.active {
+            background: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%);
+            color: white;
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
+        }
+
+        /* Breadcrumbs */
+        .breadcrumbs {
+            padding: 16px 32px;
+            background: white;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .breadcrumb {
+            color: var(--text-tertiary);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .breadcrumb:hover {
+            color: var(--primary-600);
+        }
+
+        .breadcrumb.current {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        /* Container */
         .container {
-            max-width: 1400px;
-            margin: 32px auto;
-            padding: 0 32px;
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 40px 32px;
+            animation: fadeIn 0.6s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            margin-bottom: 32px;
         }
 
         h1 {
-            font-size: 32px;
-            color: #111827;
+            font-size: 36px;
+            color: var(--text-primary);
             margin-bottom: 8px;
+            font-weight: 700;
         }
 
         .subtitle {
-            color: #6B7280;
-            margin-bottom: 32px;
+            color: var(--text-secondary);
+            font-size: 16px;
         }
 
+        /* Stats Grid */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
+            gap: 16px;
             margin-bottom: 32px;
+            animation: slideUp 0.6s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .stat-card {
             background: white;
             padding: 24px;
-            border-radius: 12px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #2563eb 0%, #06b6d4 100%);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
+        }
+
+        .stat-card:hover::before {
+            transform: scaleX(1);
         }
 
         .stat-label {
-            color: #6B7280;
-            font-size: 13px;
+            color: var(--text-tertiary);
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
             margin-bottom: 8px;
         }
 
         .stat-value {
             font-size: 32px;
             font-weight: 700;
-            color: #111827;
+            color: var(--text-primary);
         }
 
         .stat-unit {
             font-size: 16px;
-            color: #6B7280;
+            color: var(--text-tertiary);
             margin-left: 4px;
+            font-weight: 600;
         }
 
+        /* Charts Grid */
         .charts-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
             gap: 24px;
         }
 
         .chart-container {
             background: white;
-            padding: 24px;
-            border-radius: 12px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            padding: 32px;
+            border-radius: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chart-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #2563eb 0%, #06b6d4 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .chart-container:hover {
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
+            transform: translateY(-2px);
+        }
+
+        .chart-container:hover::before {
+            opacity: 1;
+        }
+
+        .chart-container.full-width {
+            grid-column: 1 / -1;
         }
 
         .chart-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: #111827;
-            margin-bottom: 16px;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .chart-icon {
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.1) 0%, rgba(6, 182, 212, 0.1) 100%);
         }
 
         .loading {
             text-align: center;
             padding: 60px;
-            color: #9CA3AF;
+            color: var(--text-tertiary);
+            font-size: 15px;
+            font-weight: 500;
+        }
+
+        .loading::after {
+            content: '...';
+            animation: dots 1.5s steps(4, end) infinite;
+        }
+
+        @keyframes dots {
+
+            0%,
+            20% {
+                content: '.';
+            }
+
+            40% {
+                content: '..';
+            }
+
+            60%,
+            100% {
+                content: '...';
+            }
+        }
+
+        .empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 80px 40px;
+            color: var(--text-tertiary);
+            background: white;
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+        }
+
+        .empty-state h3 {
+            font-size: 24px;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .empty-state p {
+            font-size: 15px;
+        }
+
+        /* Status Badge */
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success-500);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.5;
+                transform: scale(0.95);
+            }
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .navbar {
+                padding: 12px 20px;
+            }
+
+            .breadcrumbs {
+                padding: 12px 20px;
+            }
+
+            .container {
+                padding: 24px 20px;
+            }
+
+            h1 {
+                font-size: 28px;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .chart-container {
+                padding: 20px;
+            }
         }
     </style>
 </head>
+
 <body>
     <div class="navbar">
-        <div class="logo">ExecTrace</div>
+        <div class="logo" onclick="window.location.href='/workspace'">ExecTrace</div>
         <div class="nav-links">
-            <a href="/workspace" class="nav-link">Projects</a>
+            <a href="#" onclick="window.location.href='/workspace'" class="nav-link">← Projects</a>
             <a href="#" id="dashboardLink" class="nav-link">Dashboard</a>
             <a href="#" class="nav-link active">Analytics</a>
+            <div class="status-badge">
+                <div class="dot"></div>
+                <span>Live</span>
+            </div>
         </div>
     </div>
 
+    <div class="breadcrumbs">
+        <a href="/workspace" class="breadcrumb">Projects</a>
+        <span style="color: var(--text-tertiary);">/</span>
+        <span class="breadcrumb current">Analytics</span>
+    </div>
+
     <div class="container">
-        <h1>Performance Analytics</h1>
-        <p class="subtitle">Comprehensive performance insights and trends</p>
+        <div class="header">
+            <h1>📊 Performance Analytics</h1>
+            <p class="subtitle">Comprehensive performance insights and trends across all traces</p>
+        </div>
 
         <div class="stats-grid" id="statsGrid">
-            <div class="loading">Loading statistics...</div>
+            <div class="loading">Loading statistics</div>
         </div>
 
         <div class="charts-grid">
             <div class="chart-container">
-                <div class="chart-title">Function Performance Distribution</div>
+                <div class="chart-title">
+                    <span class="chart-icon">🥧</span>
+                    Performance Distribution
+                </div>
                 <canvas id="distributionChart"></canvas>
             </div>
             <div class="chart-container">
-                <div class="chart-title">Top 10 Slowest Functions</div>
+                <div class="chart-title">
+                    <span class="chart-icon">⚡</span>
+                    Top 10 Slowest Functions
+                </div>
                 <canvas id="slowestChart"></canvas>
             </div>
-            <div class="chart-container" style="grid-column: span 2;">
-                <div class="chart-title">Memory Usage Trend</div>
+            <div class="chart-container full-width">
+                <div class="chart-title">
+                    <span class="chart-icon">💾</span>
+                    Memory Usage Trend
+                </div>
                 <canvas id="memoryChart"></canvas>
             </div>
         </div>
@@ -170,41 +469,78 @@
             window.location.href = '/workspace';
         }
 
-        // Update dashboard link with API key
         document.getElementById('dashboardLink').href = `/dashboard?key=${encodeURIComponent(apiKey)}`;
+
+        // Store chart instances globally to properly destroy them before recreating
+        let chartInstances = {
+            distribution: null,
+            slowest: null,
+            memory: null
+        };
+
+        let retryCount = 0;
+        const MAX_RETRIES = 3;
 
         async function loadAnalytics() {
             try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
                 const response = await fetch(`/query/advanced?limit=1000&sort_by=duration&sort_order=desc`, {
-                    headers: { 'X-API-Key': apiKey }
+                    headers: { 'X-API-Key': apiKey },
+                    signal: controller.signal
                 });
 
+                clearTimeout(timeoutId);
+
                 if (!response.ok) {
-                    throw new Error('Failed to fetch data');
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
 
                 const data = await response.json();
+
+                // Reset retry count on success
+                retryCount = 0;
+
                 renderStats(data);
                 renderCharts(data);
             } catch (error) {
                 console.error('Error loading analytics:', error);
-                document.getElementById('statsGrid').innerHTML = '<div class="loading">Error loading data</div>';
+
+                retryCount++;
+
+                if (error.name === 'AbortError') {
+                    console.warn('Request timed out, will retry...');
+                }
+
+                if (retryCount >= MAX_RETRIES) {
+                    document.getElementById('statsGrid').innerHTML = `
+                        <div class="empty-state">
+                            <h3>⚠️ Connection Issue</h3>
+                            <p>Unable to fetch data after ${MAX_RETRIES} attempts.</p>
+                            <p style="margin-top: 10px;"><button onclick="location.reload()" style="padding: 10px 20px; background: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">Reload Page</button></p>
+                        </div>
+                    `;
+                } else {
+                    // Show temporary error but will retry
+                    console.log(`Retry ${retryCount}/${MAX_RETRIES} in next refresh cycle`);
+                }
             }
         }
 
         function renderStats(data) {
             if (!data || data.length === 0) {
-                document.getElementById('statsGrid').innerHTML = '<div class="loading">No data available</div>';
+                document.getElementById('statsGrid').innerHTML = '<div class="empty-state"><h3>📊 No data available</h3><p>Start logging traces to see analytics</p></div>';
                 return;
             }
 
             const durations = data.map(d => d.duration);
             const rams = data.map(d => d.ram);
-            
-            const avgDuration = (durations.reduce((a, b) => a + b, 0) / durations.length).toFixed(2);
+
+            const avgDuration = (durations.reduce((a, b) => a + b, 0) / durations.length).toFixed(1);
             const minDuration = Math.min(...durations);
             const maxDuration = Math.max(...durations);
-            const avgRam = (rams.reduce((a, b) => a + b, 0) / rams.length / 1024).toFixed(2);
+            const avgRam = (rams.reduce((a, b) => a + b, 0) / rams.length / 1024).toFixed(1);
 
             document.getElementById('statsGrid').innerHTML = `
                 <div class="stat-card">
@@ -231,25 +567,56 @@
         }
 
         function renderCharts(data) {
+            // Destroy existing chart instances before creating new ones
+            if (chartInstances.distribution) {
+                chartInstances.distribution.destroy();
+            }
+            if (chartInstances.slowest) {
+                chartInstances.slowest.destroy();
+            }
+            if (chartInstances.memory) {
+                chartInstances.memory.destroy();
+            }
+
             // 1. Performance Distribution (Pie Chart)
             const fast = data.filter(d => d.duration < 100).length;
             const normal = data.filter(d => d.duration >= 100 && d.duration <= 500).length;
             const slow = data.filter(d => d.duration > 500).length;
 
-            new Chart(document.getElementById('distributionChart'), {
-                type: 'pie',
+            chartInstances.distribution = new Chart(document.getElementById('distributionChart'), {
+                type: 'doughnut',
                 data: {
-                    labels: ['Fast (<100ms)', 'Normal (100-500ms)', 'Slow (>500ms)'],
+                    labels: ['🟢 Fast (<100ms)', '🟡 Normal (100-500ms)', '🔴 Slow (>500ms)'],
                     datasets: [{
                         data: [fast, normal, slow],
-                        backgroundColor: ['#10B981', '#F59E0B', '#EF4444']
+                        backgroundColor: [
+                            'rgba(16, 185, 129, 0.8)',
+                            'rgba(245, 158, 11, 0.8)',
+                            'rgba(239, 68, 68, 0.8)'
+                        ],
+                        borderWidth: 3,
+                        borderColor: '#fff',
+                        hoverOffset: 8
                     }]
                 },
                 options: {
                     responsive: true,
+                    maintainAspectRatio: true,
                     plugins: {
                         legend: {
-                            position: 'bottom'
+                            position: 'bottom',
+                            labels: {
+                                font: { family: 'Inter', size: 13, weight: 600 },
+                                padding: 20,
+                                color: '#475569'
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                            padding: 12,
+                            titleFont: { family: 'Inter', size: 14, weight: 600 },
+                            bodyFont: { family: 'Inter', size: 13 },
+                            cornerRadius: 8
                         }
                     }
                 }
@@ -271,27 +638,47 @@
                 count: byFunction[func].count
             })).sort((a, b) => b.avgDuration - a.avgDuration).slice(0, 10);
 
-            new Chart(document.getElementById('slowestChart'), {
+            chartInstances.slowest = new Chart(document.getElementById('slowestChart'), {
                 type: 'bar',
                 data: {
                     labels: funcStats.map(f => f.func),
                     datasets: [{
                         label: 'Avg Duration (ms)',
                         data: funcStats.map(f => f.avgDuration),
-                        backgroundColor: '#4F46E5'
+                        backgroundColor: 'rgba(37, 99, 235, 0.8)',
+                        borderRadius: 8,
+                        borderWidth: 0,
+                        hoverBackgroundColor: 'rgba(6, 182, 212, 0.8)'
                     }]
                 },
                 options: {
                     responsive: true,
                     indexAxis: 'y',
                     plugins: {
-                        legend: {
-                            display: false
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                            padding: 12,
+                            titleFont: { family: 'Inter', size: 14, weight: 600 },
+                            bodyFont: { family: 'Inter', size: 13 },
+                            cornerRadius: 8
                         }
                     },
                     scales: {
                         x: {
-                            beginAtZero: true
+                            beginAtZero: true,
+                            grid: { color: '#f1f5f9', lineWidth: 1 },
+                            ticks: {
+                                font: { family: 'Inter', size: 12, weight: 500 },
+                                color: '#64748b'
+                            }
+                        },
+                        y: {
+                            grid: { display: false },
+                            ticks: {
+                                font: { family: 'Inter', size: 12, weight: 600 },
+                                color: '#475569'
+                            }
                         }
                     }
                 }
@@ -299,40 +686,77 @@
 
             // 3. Memory Usage Trend (Line Chart)
             const last50 = data.slice(0, 50).reverse();
-            new Chart(document.getElementById('memoryChart'), {
+            chartInstances.memory = new Chart(document.getElementById('memoryChart'), {
                 type: 'line',
                 data: {
                     labels: last50.map((d, i) => `#${i + 1}`),
                     datasets: [{
                         label: 'Memory Usage (MB)',
                         data: last50.map(d => d.ram / 1024),
-                        borderColor: '#4F46E5',
-                        backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                        borderColor: '#2563eb',
+                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
                         fill: true,
-                        tension: 0.4
+                        tension: 0.4,
+                        borderWidth: 3,
+                        pointBackgroundColor: '#2563eb',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 5,
+                        pointHoverRadius: 7,
+                        pointHoverBackgroundColor: '#06b6d4',
+                        pointHoverBorderWidth: 3
                     }]
                 },
                 options: {
                     responsive: true,
                     plugins: {
-                        legend: {
-                            display: false
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                            padding: 12,
+                            titleFont: { family: 'Inter', size: 14, weight: 600 },
+                            bodyFont: { family: 'Inter', size: 13 },
+                            cornerRadius: 8
                         }
                     },
                     scales: {
                         y: {
-                            beginAtZero: true
+                            beginAtZero: true,
+                            grid: { color: '#f1f5f9', lineWidth: 1 },
+                            ticks: {
+                                font: { family: 'Inter', size: 12, weight: 500 },
+                                color: '#64748b'
+                            }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: {
+                                font: { family: 'Inter', size: 11, weight: 500 },
+                                color: '#64748b'
+                            }
                         }
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
                     }
                 }
             });
         }
 
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (chartInstances.distribution) chartInstances.distribution.destroy();
+            if (chartInstances.slowest) chartInstances.slowest.destroy();
+            if (chartInstances.memory) chartInstances.memory.destroy();
+        });
+
         // Load analytics on page load
         loadAnalytics();
 
-        // Auto-refresh every 10 seconds
-        setInterval(loadAnalytics, 10000);
+        // Auto-refresh removed - user can manually refresh the page if needed
+        // setInterval(loadAnalytics, 10000);
     </script>
 </body>
+
 </html>

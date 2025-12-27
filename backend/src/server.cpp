@@ -1,15 +1,16 @@
 #define CROW_MAIN  
 #include <crow.h>
 #include <iostream>
-#include <fstream>
-#include <sstream>
-#include <map>
-#include <algorithm>
 #include "../include/Database.hpp"
 #include "../include/AuthDB.hpp"
-#include "../include/Validation.hpp"
-#include "../include/RateLimiter.hpp"
-#include "../include/Logger.hpp"
+#include "../include/Models.hpp"
+#include "../include/Utils.hpp"
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <vector>
+#include <thread>
+#include <mutex>
 
 // Platform-specific includes for directory operations
 #ifdef _WIN32
@@ -137,6 +138,28 @@ int main() {
         return resp;
     });
     
+    CROW_ROUTE(app, "/admin")
+    ([&read_file](){
+        auto content = read_file("frontend/admin.html");
+        if (content.empty()) {
+            return crow::response(404, "File not found");
+        }
+        crow::response resp(200, content);
+        resp.add_header("Content-Type", "text/html");
+        return resp;
+    });
+    
+    CROW_ROUTE(app, "/analytics")
+    ([&read_file](){
+        auto content = read_file("frontend/analytics.html");
+        if (content.empty()) {
+            return crow::response(404, "File not found");
+        }
+        crow::response resp(200, content);
+        resp.add_header("Content-Type", "text/html");
+        return resp;
+    });
+    
     
     // Health check endpoint
     CROW_ROUTE(app, "/health")
@@ -148,7 +171,7 @@ int main() {
     
     // Log endpoint - POST only
     CROW_ROUTE(app, "/log").methods(crow::HTTPMethod::Post)
-    ([&auth_db, &rate_limiter](const crow::request& req){
+    ([](const crow::request& req){
         std::cout << "\n[/log] ===== POST REQUEST RECEIVED =====" << std::endl;
         std::cout << "[/log] Content-Type: " << req.get_header_value("Content-Type") << std::endl;
         
@@ -274,11 +297,70 @@ int main() {
     CROW_ROUTE(app, "/api/auth/register").methods(crow::HTTPMethod::Post)
     ([](const crow::request& req){
         std::cout << "\n[/api/auth/register] Request received" << std::endl;
-        auto params = crow::query_string(req.body);
+        std::cout << "[DEBUG] Request body: " << req.body << std::endl;
         
-        std::string email = params.get("email") ? params.get("email") : "";
-        std::string password = params.get("password") ? params.get("password") : "";
-        std::string username = params.get("username") ? params.get("username") : "";
+        // Simple URL decode function
+        auto url_decode = [](const std::string& str) -> std::string {
+            std::string result;
+            for (size_t i = 0; i < str.length(); i++) {
+                if (str[i] == '%' && i + 2 < str.length()) {
+                    int value;
+                    std::istringstream is(str.substr(i + 1, 2));
+                    if (is >> std::hex >> value) {
+                        result += static_cast<char>(value);
+                        i += 2;
+                    } else {
+                        result += str[i];
+                    }
+                } else if (str[i] == '+') {
+                    result += ' ';
+                } else {
+                    result += str[i];
+                }
+            }
+            return result;
+        };
+        
+        // Manual parsing of URL-encoded form data
+        std::string body = req.body;
+        std::string email, password, username;
+        
+        // Parse email
+        size_t email_pos = body.find("email=");
+        if (email_pos != std::string::npos) {
+            size_t email_end = body.find("&", email_pos);
+            std::string email_encoded = body.substr(email_pos + 6, 
+                email_end == std::string::npos ? std::string::npos : email_end - email_pos - 6);
+            email = url_decode(email_encoded);
+        }
+        
+        // Parse password
+        size_t pwd_pos = body.find("password=");
+        if (pwd_pos != std::string::npos) {
+            size_t pwd_end = body.find("&", pwd_pos);
+            std::string pwd_encoded = body.substr(pwd_pos + 9, 
+                pwd_end == std::string::npos ? std::string::npos : pwd_end - pwd_pos - 9);
+            password = url_decode(pwd_encoded);
+        }
+        
+        // Parse username
+        size_t user_pos = body.find("username=");
+        if (user_pos != std::string::npos) {
+            size_t user_end = body.find("&", user_pos);
+            std::string user_encoded = body.substr(user_pos + 9, 
+                user_end == std::string::npos ? std::string::npos : user_end - user_pos - 9);
+            username = url_decode(user_encoded);
+        }
+        
+        std::cout << "[DEBUG] Email: '" << email << "'" << std::endl;
+        std::cout << "[DEBUG] Username: '" << username << "'" << std::endl;
+        std::cout << "[DEBUG] Password length: " << password.length() << std::endl;
+        
+        if (email.empty() || password.empty() || username.empty()) {
+            crow::response resp(400, "{\"error\":\"Missing required fields\"}");
+            resp.add_header("Content-Type", "application/json");
+            return resp;
+        }
         
         int user_id;
         if (auth_db->register_user(email, password, username, user_id)) {
@@ -297,14 +379,62 @@ int main() {
     CROW_ROUTE(app, "/api/auth/login").methods(crow::HTTPMethod::Post)
     ([](const crow::request& req){
         std::cout << "\n[/api/auth/login] Request received" << std::endl;
-        auto params = crow::query_string(req.body);
+        std::cout << "[DEBUG] Request body: " << req.body << std::endl;
         
-        std::string email = params.get("email") ? params.get("email") : "";
-        std::string password = params.get("password") ? params.get("password") : "";
+        // Simple URL decode function
+        auto url_decode = [](const std::string& str) -> std::string {
+            std::string result;
+            for (size_t i = 0; i < str.length(); i++) {
+                if (str[i] == '%' && i + 2 < str.length()) {
+                    int value;
+                    std::istringstream is(str.substr(i + 1, 2));
+                    if (is >> std::hex >> value) {
+                        result += static_cast<char>(value);
+                        i += 2;
+                    } else {
+                        result += str[i];
+                    }
+                } else if (str[i] == '+') {
+                    result += ' ';
+                } else {
+                    result += str[i];
+                }
+            }
+            return result;
+        };
+        
+        // Manual parsing of POST body
+        std::string body = req.body;
+        std::string email, password;
+        
+        // Parse email
+        size_t email_pos = body.find("email=");
+        if (email_pos != std::string::npos) {
+            size_t email_end = body.find("&", email_pos);
+            std::string email_encoded = body.substr(email_pos + 6, 
+                email_end == std::string::npos ? std::string::npos : email_end - email_pos - 6);
+            email = url_decode(email_encoded);
+        }
+        
+        // Parse password
+        size_t pwd_pos = body.find("password=");
+        if (pwd_pos != std::string::npos) {
+            size_t pwd_end = body.find("&", pwd_pos);
+            std::string pwd_encoded = body.substr(pwd_pos + 9, 
+                pwd_end == std::string::npos ? std::string::npos : pwd_end - pwd_pos - 9);
+            password = url_decode(pwd_encoded);
+        }
+        
+        std::cout << "[DEBUG] Email: '" << email << "'" << std::endl;
+        std::cout << "[DEBUG] Password length: " << password.length() << std::endl;
         
         ExecTrace::UserEntry user;
         if (auth_db->login_user(email, password, user)) {
-            crow::response resp(200, "{\"status\":\"ok\",\"user_id\":" + std::to_string(user.user_id) + ",\"username\":\"" + std::string(user.username) + "\"}");
+            // Include role in response
+            std::string json_resp = "{\"status\":\"ok\",\"user_id\":" + std::to_string(user.user_id) + 
+                                   ",\"username\":\"" + std::string(user.username) + 
+                                   "\",\"role\":" + std::to_string(user.role) + "}";
+            crow::response resp(200, json_resp);
             resp.add_header("Content-Type", "application/json");
             resp.add_header("Access-Control-Allow-Origin", "*");
             return resp;
@@ -354,7 +484,7 @@ int main() {
     
     // Get user projects
     CROW_ROUTE(app, "/api/projects/<int>")
-    ([&auth_db](int user_id){
+    ([](int user_id){
         std::cout << "\n[/api/projects] Getting projects for user " << user_id << std::endl;
         
         try {
@@ -387,7 +517,7 @@ int main() {
     
     // Update project settings
     CROW_ROUTE(app, "/api/project/<int>/settings").methods(crow::HTTPMethod::Put)
-    ([&auth_db](const crow::request& req, int project_id){
+    ([](const crow::request& req, int project_id){
         std::cout << "\n[/api/project/settings] Updating settings for project " << project_id << std::endl;
         
         try {
@@ -424,7 +554,7 @@ int main() {
     
     // Delete project
     CROW_ROUTE(app, "/api/project/<int>").methods(crow::HTTPMethod::Delete)
-    ([&auth_db](int project_id){
+    ([](int project_id){
         std::cout << "\n[/api/project/delete] Deleting project " << project_id << std::endl;
         
         try {
@@ -447,9 +577,179 @@ int main() {
         }
     });
     
+    // ========== ADMIN ENDPOINTS ==========
+    
+    // Get all users (Admin only)
+    CROW_ROUTE(app, "/api/admin/users").methods(crow::HTTPMethod::Get)
+    ([](const crow::request& req){
+        std::cout << "\n[/api/admin/users] Get all users request" << std::endl;
+        
+        // Get user_id from query parameter
+        auto params = crow::query_string(req.url_params);
+        std::string user_id_str = params.get("admin_user_id") ? params.get("admin_user_id") : "";
+        
+        if (user_id_str.empty()) {
+            crow::response resp(401, "{\"error\":\"Authentication required\"}");
+            resp.add_header("Content-Type", "application/json");
+            return resp;
+        }
+        
+        int admin_user_id = std::stoi(user_id_str);
+        
+        // Check if user is admin
+        if (!auth_db->has_permission(admin_user_id, "manage_users")) {
+            crow::response resp(403, "{\"error\":\"Admin access required\"}");
+            resp.add_header("Content-Type", "application/json");
+            return resp;
+        }
+        
+        try {
+            auto users = auth_db->get_all_users();
+            
+            // Build JSON array
+            std::string json = "{\"status\":\"ok\",\"users\":[";
+            for (size_t i = 0; i < users.size(); i++) {
+                if (i > 0) json += ",";
+                json += "{";
+                json += "\"user_id\":" + std::to_string(users[i].user_id) + ",";
+                json += "\"email\":\"" + std::string(users[i].email) + "\",";
+                json += "\"username\":\"" + std::string(users[i].username) + "\",";
+                json += "\"role\":" + std::to_string(users[i].role) + ",";
+                json += "\"is_active\":" + std::string(users[i].is_active ? "true" : "false") + ",";
+                json += "\"created_at\":" + std::to_string(users[i].created_at);
+                json += "}";
+            }
+            json += "]}";
+            
+            crow::response resp(200, json);
+            resp.add_header("Content-Type", "application/json");
+            resp.add_header("Access-Control-Allow-Origin", "*");
+            return resp;
+        } catch (const std::exception& e) {
+            crow::response resp(500, "{\"error\":\"Server error\"}");
+            resp.add_header("Content-Type", "application/json");
+            return resp;
+        }
+    });
+    
+    // Update user role (Admin only)
+    CROW_ROUTE(app, "/api/admin/users/<int>/role").methods(crow::HTTPMethod::Put)
+    ([](const crow::request& req, int target_user_id){
+        std::cout << "\n[/api/admin/users/role] Update role for user " << target_user_id << std::endl;
+        std::cout << "[DEBUG] Request body: " << req.body << std::endl;
+        
+        // Manual parsing of POST body
+        std::string body = req.body;
+        std::string admin_user_id_str, new_role_str;
+        
+        // Parse admin_user_id
+        size_t admin_pos = body.find("admin_user_id=");
+        if (admin_pos != std::string::npos) {
+            size_t admin_end = body.find("&", admin_pos);
+            admin_user_id_str = body.substr(admin_pos + 14, 
+                admin_end == std::string::npos ? std::string::npos : admin_end - admin_pos - 14);
+        }
+        
+        // Parse role
+        size_t role_pos = body.find("role=");
+        if (role_pos != std::string::npos) {
+            size_t role_end = body.find("&", role_pos);
+            new_role_str = body.substr(role_pos + 5, 
+                role_end == std::string::npos ? std::string::npos : role_end - role_pos - 5);
+        }
+        
+        std::cout << "[DEBUG] admin_user_id: '" << admin_user_id_str << "'" << std::endl;
+        std::cout << "[DEBUG] role: '" << new_role_str << "'" << std::endl;
+        
+        if (admin_user_id_str.empty() || new_role_str.empty()) {
+            crow::response resp(400, "{\"error\":\"Missing parameters\"}");
+            resp.add_header("Content-Type", "application/json");
+            return resp;
+        }
+        
+        int admin_user_id = std::stoi(admin_user_id_str);
+        int new_role = std::stoi(new_role_str);
+        
+        // Validate role value
+        if (new_role < 0 || new_role > 2) {
+            crow::response resp(400, "{\"error\":\"Invalid role value. Must be 0 (User), 1 (Editor), or 2 (Admin)\"}");
+            resp.add_header("Content-Type", "application/json");
+            return resp;
+        }
+        
+        // Check if requester is admin
+        if (!auth_db->has_permission(admin_user_id, "assign_roles")) {
+            crow::response resp(403, "{\"error\":\"Admin access required\"}");
+            resp.add_header("Content-Type", "application/json");
+            return resp;
+        }
+        
+        try {
+            if (auth_db->update_user_role(target_user_id, new_role)) {
+                const char* role_names[] = {"User", "Editor", "Admin"};
+                std::string json = "{\"status\":\"ok\",\"message\":\"Role updated to " + 
+                                  std::string(role_names[new_role]) + "\"}";
+                
+                crow::response resp(200, json);
+                resp.add_header("Content-Type", "application/json");
+                resp.add_header("Access-Control-Allow-Origin", "*");
+                return resp;
+            } else {
+                crow::response resp(400, "{\"error\":\"Failed to update role\"}");
+                resp.add_header("Content-Type", "application/json");
+                return resp;
+            }
+        } catch (const std::exception& e) {
+            crow::response resp(500, "{\"error\":\"Server error\"}");
+            resp.add_header("Content-Type", "application/json");
+            return resp;
+        }
+    });
+    
+    // Deactivate user (Admin only)
+    CROW_ROUTE(app, "/api/admin/users/<int>").methods(crow::HTTPMethod::Delete)
+    ([](const crow::request& req, int target_user_id){
+        std::cout << "\n[/api/admin/users/delete] Deactivate user " << target_user_id << std::endl;
+        
+        auto params = crow::query_string(req.url_params);
+        std::string admin_user_id_str = params.get("admin_user_id") ? params.get("admin_user_id") : "";
+        
+        if (admin_user_id_str.empty()) {
+            crow::response resp(401, "{\"error\":\"Authentication required\"}");
+            resp.add_header("Content-Type", "application/json");
+            return resp;
+        }
+        
+        int admin_user_id = std::stoi(admin_user_id_str);
+        
+        // Check if requester is admin
+        if (!auth_db->has_permission(admin_user_id, "manage_users")) {
+            crow::response resp(403, "{\"error\":\"Admin access required\"}");
+            resp.add_header("Content-Type", "application/json");
+            return resp;
+        }
+        
+        try {
+            if (auth_db->deactivate_user(target_user_id)) {
+                crow::response resp(200, "{\"status\":\"ok\",\"message\":\"User deactivated\"}");
+                resp.add_header("Content-Type", "application/json");
+                resp.add_header("Access-Control-Allow-Origin", "*");
+                return resp;
+            } else {
+                crow::response resp(400, "{\"error\":\"Failed to deactivate user\"}");
+                resp.add_header("Content-Type", "application/json");
+                return resp;
+            }
+        } catch (const std::exception& e) {
+            crow::response resp(500, "{\"error\":\"Server error\"}");
+            resp.add_header("Content-Type", "application/json");
+            return resp;
+        }
+    });
+    
     // Advanced query endpoint for dashboard
     CROW_ROUTE(app, "/query/advanced")
-    ([&trace_db, &auth_db](const crow::request& req){
+    ([](const crow::request& req){
         std::cout << "\n[/query/advanced] Advanced query request" << std::endl;
         
         auto params = crow::query_string(req.url_params);

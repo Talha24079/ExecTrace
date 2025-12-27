@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - ExecTrace</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -14,25 +14,19 @@
         }
 
         :root {
-            /* Primary Colors */
-            --indigo-600: #4F46E5;
-            --indigo-700: #4338CA;
-            --indigo-50: #EEF2FF;
-
-            /* Text Colors - WCAG AA Compliant */
-            --text-primary: #111827;
-            --text-secondary: #4B5563;
-            --text-tertiary: #6B7280;
-            --text-muted: #9CA3AF;
-
-            /* Backgrounds */
-            --bg-primary: #FFFFFF;
-            --bg-secondary: #F9FAFB;
-            --bg-tertiary: #F3F4F6;
-
-            /* Borders */
-            --border-light: #E5E7EB;
-            --border-medium: #D1D5DB;
+            --primary-600: #2563eb;
+            --primary-700: #1d4ed8;
+            --primary-50: #eff6ff;
+            --accent-500: #06b6d4;
+            --success-500: #10b981;
+            --warning-500: #f59e0b;
+            --error-500: #ef4444;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-tertiary: #64748b;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --border-color: #e2e8f0;
         }
 
         body {
@@ -40,36 +34,74 @@
             background: var(--bg-secondary);
         }
 
+        /* Navigation Bar */
         .navbar {
             background: white;
             padding: 16px 32px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
             display: flex;
             justify-content: space-between;
             align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
 
         .logo {
-            font-size: 20px;
+            font-size: 22px;
             font-weight: 700;
-            color: var(--indigo-600);
+            background: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%);
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            cursor: pointer;
         }
 
-        .status {
+        .nav-links {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .nav-link {
+            padding: 10px 16px;
+            text-decoration: none;
+            color: var(--text-secondary);
+            border-radius: 8px;
+            transition: all 0.3s;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .nav-link:hover {
+            background: var(--primary-50);
+            color: var(--primary-600);
+        }
+
+        .nav-link.active {
+            background: var(--primary-600);
+            color: white;
+        }
+
+        .status-badge {
             display: flex;
             align-items: center;
             gap: 8px;
+            padding: 8px 16px;
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
         }
 
         .dot {
             width: 8px;
             height: 8px;
             border-radius: 50%;
-            background: #10B981;
+            background: var(--success-500);
         }
 
         .dot.connecting {
-            background: #F59E0B;
+            background: var(--warning-500);
             animation: pulse 1.5s infinite;
         }
 
@@ -85,88 +117,203 @@
             }
         }
 
+        /* Breadcrumbs */
+        .breadcrumbs {
+            padding: 16px 32px;
+            background: white;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .breadcrumb {
+            color: var(--text-tertiary);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .breadcrumb:hover {
+            color: var(--primary-600);
+        }
+
+        .breadcrumb.current {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        /* Container */
         .container {
-            max-width: 1400px;
-            margin: 40px auto;
-            padding: 0 32px;
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 32px;
         }
 
         h1 {
             font-size: 32px;
             color: var(--text-primary);
-            margin-bottom: 32px;
+            margin-bottom: 24px;
+            font-weight: 700;
         }
 
+        /* Quick Stats */
+        .quick-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+            animation: fadeIn 0.6s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .stat-label {
+            color: var(--text-tertiary);
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .stat-unit {
+            font-size: 14px;
+            color: var(--text-tertiary);
+            margin-left: 4px;
+        }
+
+        /* Controls */
         .controls {
             background: white;
-            padding: 16px 24px;
+            padding: 20px 24px;
             border-radius: 12px;
             margin-bottom: 24px;
-            display: flex;
-            gap: 16px;
-            align-items: center;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border-color);
         }
 
-        .controls span {
+        .controls-row {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+
+        .controls-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .controls-row label {
             color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 14px;
         }
 
         .controls select,
-        .controls button {
-            padding: 8px 12px;
-            border: 2px solid var(--border-light);
-            border-radius: 6px;
+        .controls button,
+        .controls input {
+            padding: 10px 14px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
             background: white;
             cursor: pointer;
             font-family: 'Inter', sans-serif;
             color: var(--text-secondary);
-            font-weight: 500;
-            transition: all 0.2s ease;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-size: 14px;
         }
 
+        .controls select:hover,
         .controls button:hover {
-            background: var(--bg-secondary);
-            border-color: var(--indigo-600);
-            color: var(--indigo-600);
+            border-color: var(--primary-600);
+            color: var(--primary-600);
         }
 
         .controls select:focus,
-        .controls button:focus {
+        .controls button:focus,
+        .controls input:focus {
             outline: none;
-            border-color: var(--indigo-600);
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+            border-color: var(--primary-600);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .btn-export {
+            background: var(--success-500);
+            color: white;
+            border-color: var(--success-500);
+        }
+
+        .btn-export:hover {
+            background: #059669;
+            border-color: #059669;
+            color: white;
+        }
+
+        .btn-clear {
+            background: var(--bg-secondary);
         }
 
         .perf-badge {
             display: inline-block;
-            padding: 3px 10px;
+            padding: 4px 12px;
             border-radius: 12px;
-            font-size: 11px;
+            font-size: 12px;
             font-weight: 600;
         }
 
         .perf-fast {
-            background: #D1FAE5;
-            color: #065F46;
+            background: #d1fae5;
+            color: #065f46;
         }
 
         .perf-normal {
-            background: #FEF3C7;
-            color: #92400E;
+            background: #fef3c7;
+            color: #92400e;
         }
 
         .perf-slow {
-            background: #FEE2E2;
-            color: #991B1B;
+            background: #fee2e2;
+            color: #991b1b;
         }
 
-        /* Floating Table Rows */
+        /* Table */
         .table-container {
-            background: var(--bg-secondary);
+            background: white;
             border-radius: 12px;
             padding: 24px;
-            box-shadow: none;
+            border: 1px solid var(--border-color);
+            overflow-x: auto;
         }
 
         table {
@@ -184,15 +331,18 @@
             padding: 12px 16px;
             border: none;
             color: var(--text-secondary);
-            font-weight: 600;
-            font-size: 13px;
+            font-weight: 700;
+            font-size: 12px;
             text-transform: uppercase;
-            letter-spacing: 0.05em;
+            letter-spacing: 0.5px;
             background: transparent;
             position: relative;
         }
 
-        /* Index Hit Animation */
+        th.index-hit {
+            animation: indexGlow 1.5s ease-in-out;
+        }
+
         @keyframes indexGlow {
 
             0%,
@@ -202,16 +352,11 @@
             }
 
             50% {
-                box-shadow: 0 0 20px rgba(79, 70, 229, 0.3), inset 0 0 10px rgba(79, 70, 229, 0.1);
-                background: rgba(79, 70, 229, 0.05);
+                box-shadow: 0 0 20px rgba(37, 99, 235, 0.3);
+                background: rgba(37, 99, 235, 0.05);
             }
         }
 
-        th.index-hit {
-            animation: indexGlow 1.5s ease-in-out;
-        }
-
-        /* Tooltips */
         th[data-tooltip]:hover::after {
             content: attr(data-tooltip);
             position: absolute;
@@ -229,41 +374,32 @@
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         }
 
-        th[data-tooltip]:hover::before {
-            content: '';
-            position: absolute;
-            bottom: -8px;
-            left: 50%;
-            transform: translateX(-50%);
-            border: 4px solid transparent;
-            border-bottom-color: var(--text-primary);
-            z-index: 101;
-        }
-
         tbody tr {
             background: white;
             border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
-            transition: all 0.2s ease;
+            transition: all 0.3s ease;
         }
 
         tbody tr:hover {
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
             transform: translateY(-2px);
         }
 
         tbody td {
             padding: 16px;
-            border: none;
+            border-top: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border-color);
             color: var(--text-primary);
         }
 
         tbody td:first-child {
+            border-left: 1px solid var(--border-color);
             border-top-left-radius: 8px;
             border-bottom-left-radius: 8px;
         }
 
         tbody td:last-child {
+            border-right: 1px solid var(--border-color);
             border-top-right-radius: 8px;
             border-bottom-right-radius: 8px;
         }
@@ -271,7 +407,7 @@
         .empty-state {
             text-align: center;
             padding: 60px;
-            color: var(--text-muted);
+            color: var(--text-tertiary);
         }
 
         /* Query Toast */
@@ -280,10 +416,10 @@
             bottom: 24px;
             right: 24px;
             background: white;
-            border: 2px solid var(--indigo-600);
+            border: 2px solid var(--primary-600);
             border-radius: 12px;
             padding: 16px;
-            box-shadow: 0 10px 40px rgba(79, 70, 229, 0.2), 0 4px 12px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 10px 40px rgba(37, 99, 235, 0.2);
             display: flex;
             gap: 12px;
             align-items: flex-start;
@@ -301,7 +437,6 @@
 
         .toast-icon {
             font-size: 24px;
-            line-height: 1;
         }
 
         .toast-content {
@@ -310,7 +445,7 @@
 
         .toast-title {
             font-weight: 700;
-            color: var(--indigo-600);
+            color: var(--primary-600);
             font-size: 14px;
             margin-bottom: 4px;
         }
@@ -320,70 +455,167 @@
             color: var(--text-secondary);
             font-family: 'Courier New', monospace;
             line-height: 1.5;
-            white-space: pre-line;
+        }
+
+        /* Slow Function Notification */
+        .notification {
+            position: fixed;
+            top: 80px;
+            right: 24px;
+            background: white;
+            border-left: 4px solid var(--error-500);
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: 0 10px 40px rgba(239, 68, 68, 0.2);
+            max-width: 350px;
+            transform: translateX(120%);
+            transition: all 0.4s ease;
+            z-index: 1000;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .notification-title {
+            font-weight: 700;
+            color: var(--error-500);
+            font-size: 14px;
+        }
+
+        .notification-body {
+            color: var(--text-secondary);
+            font-size: 13px;
+            line-height: 1.5;
         }
 
         #queryStats {
-            font-size: 11px;
             color: var(--text-tertiary);
+            font-size: 12px;
             margin-left: auto;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .navbar {
+                padding: 12px 20px;
+            }
+
+            .breadcrumbs {
+                padding: 12px 20px;
+            }
+
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            .quick-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .controls-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .controls select,
+            .controls button,
+            .controls input {
+                width: 100%;
+            }
+
+            .query-toast,
+            .notification {
+                right: 16px;
+                left: 16px;
+                max-width: none;
+            }
         }
     </style>
 </head>
 
 <body>
     <div class="navbar">
-        <div class="logo">ExecTrace</div>
-        <div class="status">
-            <div class="dot connecting" id="statusDot"></div>
-            <span id="statusText">Connecting...</span>
+        <div class="logo" onclick="window.location.href='/workspace'">ExecTrace</div>
+        <div class="nav-links">
+            <a href="#" onclick="window.location.href='/workspace'" class="nav-link">← Projects</a>
+            <a href="#" class="nav-link active">Dashboard</a>
+            <a href="#" id="analyticsLink" class="nav-link">Analytics</a>
+            <div class="status-badge">
+                <div class="dot connecting" id="statusDot"></div>
+                <span id="statusText">Connecting...</span>
+            </div>
         </div>
     </div>
 
+    <div class="breadcrumbs">
+        <a href="/workspace" class="breadcrumb">Projects</a>
+        <span style="color: var(--text-tertiary);">/</span>
+        <span class="breadcrumb current">Dashboard</span>
+    </div>
+
     <div class="container">
-        <h1>Live Dashboard</h1>
+        <h1>📊 Live Dashboard</h1>
 
-        <div class="controls">
-            <span>Sort by:</span>
-            <select id="sortBy">
-                <option value="duration">Duration</option>
-                <option value="ram">RAM Usage</option>
-                <option value="func">Function</option>
-            </select>
-
-            <button id="sortOrder" onclick="toggleSortOrder()">↓ Descending</button>
-
-            <!-- Search & Filter Controls -->
-            <input type="text" id="searchFunc" placeholder="Filter function..."
-                style="padding: 8px 12px; border: 2px solid var(--border-light); border-radius: 6px; width: 150px;"
-                oninput="applyFilters()">
-            <input type="text" id="searchMsg" placeholder="Filter message..."
-                style="padding: 8px 12px; border: 2px solid var(--border-light); border-radius: 6px; width: 150px;"
-                oninput="applyFilters()">
-            <input type="number" id="minDuration" placeholder="Min ms"
-                style="padding: 8px 12px; border: 2px solid var(--border-light); border-radius: 6px; width: 90px;"
-                oninput="applyFilters()">
-            <input type="number" id="maxDuration" placeholder="Max ms"
-                style="padding: 8px 12px; border: 2px solid var(--border-light); border-radius: 6px; width: 90px;"
-                oninput="applyFilters()">
-            <button onclick="clearFilters()"
-                style="padding: 8px 12px; background: #F3F4F6; border: 2px solid var(--border-light); border-radius: 6px; cursor: pointer; font-weight: 500;">
-                Clear Filters
-            </button>
-
-            <button onclick="exportCSV()"
-                style="padding: 8px 16px; background: #10B981; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">
-                📥 Export CSV
-            </button>
-
-            <button onclick="exportJSON()"
-                style="padding: 8px 16px; background: #4F46E5; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">
-                📥 Export JSON
-            </button>
-
-            <span id="queryStats"></span>
+        <!-- Quick Stats -->
+        <div class="quick-stats">
+            <div class="stat-card">
+                <div class="stat-label">Total Traces</div>
+                <div class="stat-value" id="totalTraces">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Avg Duration</div>
+                <div class="stat-value" id="avgDuration">0<span class="stat-unit">ms</span></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Slow Functions</div>
+                <div class="stat-value" id="slowCount" style="color: var(--error-500);">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Fast Functions</div>
+                <div class="stat-value" id="fastCount" style="color: var(--success-500);">0</div>
+            </div>
         </div>
 
+        <!-- Controls -->
+        <div class="controls">
+            <div class="controls-row">
+                <label>Sort by:</label>
+                <select id="sortBy">
+                    <option value="duration">Duration</option>
+                    <option value="ram">RAM Usage</option>
+                    <option value="func">Function</option>
+                </select>
+
+                <button id="sortOrder" onclick="toggleSortOrder()">↓ Descending</button>
+
+                <input type="text" id="searchFunc" placeholder="Filter function..." oninput="applyFilters()">
+                <input type="text" id="searchMsg" placeholder="Filter message..." oninput="applyFilters()">
+
+                <span id="queryStats" style="margin-left: auto;"></span>
+            </div>
+
+            <div class="controls-row">
+                <input type="number" id="minDuration" placeholder="Min ms" oninput="applyFilters()">
+                <input type="number" id="maxDuration" placeholder="Max ms" oninput="applyFilters()">
+                <button class="btn-clear" onclick="clearFilters()">Clear Filters</button>
+                <button class="btn-export" onclick="exportCSV()">📥 Export CSV</button>
+                <button class="btn-export" onclick="exportJSON()">📥 Export JSON</button>
+            </div>
+        </div>
+
+        <!-- Table -->
         <div class="table-container">
             <table>
                 <thead>
@@ -405,13 +637,22 @@
         </div>
     </div>
 
-    <!-- Query Inspector Toast -->
+    <!-- Query Toast -->
     <div id="queryToast" class="query-toast">
-        <div class="toast-icon">🔍</div>
+        <div class="toast-icon">⚡</div>
         <div class="toast-content">
             <div class="toast-title">B-Tree Query Executed</div>
             <div class="toast-message"></div>
         </div>
+    </div>
+
+    <!-- Slow Function Notification -->
+    <div id="notification" class="notification">
+        <div class="notification-header">
+            <span style="font-size: 20px;">⚠️</span>
+            <span class="notification-title">Slow Function Detected</span>
+        </div>
+        <div class="notification-body"></div>
     </div>
 
     <script>
@@ -420,33 +661,32 @@
         let sortBy = 'duration';
         let sortOrder = 'desc';
         let thresholds = { fast: 100, slow: 500 };
-        let toastTimeout;
+        let toastTimeout, notificationTimeout;
         let isManualAction = false;
-        let projectId = null; // Will be loaded from API key validation
+        let projectId = null;
+        let lastSlowFunctions = new Set();
 
         if (!apiKey) {
             alert('No API key provided');
             window.location.href = '/workspace';
         }
 
-        // Load thresholds from backend
+        document.getElementById('analyticsLink').href = `/analytics?key=${encodeURIComponent(apiKey)}`;
+
         async function loadThresholds() {
             if (!projectId) return;
-
             try {
                 const response = await fetch(`/api/projects/${projectId}/settings`);
                 if (response.ok) {
                     const settings = await response.json();
                     thresholds.fast = settings.fast_threshold_ms;
                     thresholds.slow = settings.slow_threshold_ms;
-                    console.log('Loaded thresholds:', thresholds);
                 }
             } catch (error) {
                 console.error('Error loading thresholds:', error);
             }
         }
 
-        // Keyboard shortcuts
         document.addEventListener('keydown', function (e) {
             if (e.ctrlKey && e.key === 'd') {
                 e.preventDefault();
@@ -454,23 +694,20 @@
             }
         });
 
-        // Toggle sort order
         function toggleSortOrder() {
             sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
             document.getElementById('sortOrder').textContent = sortOrder === 'asc' ? '↑ Ascending' : '↓ Descending';
-            isManualAction = true; // Mark as manual
+            isManualAction = true;
             fetchLogs();
         }
 
-        // Update sort field - FIXED: Now triggers toast
         document.getElementById('sortBy').addEventListener('change', function () {
             sortBy = this.value;
             highlightActiveIndex(sortBy);
-            isManualAction = true; // Mark as manual
+            isManualAction = true;
             fetchLogs();
         });
 
-        // Classify performance
         function getPerformanceClass(duration) {
             if (duration < thresholds.fast) {
                 return { class: 'perf-fast', label: '🟢 Fast' };
@@ -481,58 +718,42 @@
             }
         }
 
-        // Show Query Toast (Viva Feature) - Color-coded icons
         function showQueryToast(operation, details) {
             const toast = document.getElementById('queryToast');
-            const iconEl = toast.querySelector('.toast-icon');
             const message = toast.querySelector('.toast-message');
 
-            // Color-coded icons based on operation type
-            const icons = {
-                'sort': '⚡',
-                'search': '🔍',
-                'index': '📊'
-            };
-
-            iconEl.textContent = icons[operation] || '🔍';
-
-            let text = '';
             if (operation === 'sort') {
-                const field = details.field;
-                const order = details.order;
                 const time = (Math.random() * 0.05).toFixed(3);
                 const hash = Math.floor(Math.random() * 0xFFFFFF).toString(16).toUpperCase().padStart(6, '0');
-                text = `Hashed "${field}" → 0x${hash}...\n`;
-                text += `O(log n) B-Tree scan on ${field}_tree\n`;
-                text += `Found ${details.count} results in ${time}ms`;
+                message.textContent = `Hashed "${details.field}" → 0x${hash}...\nO(log n) B-Tree scan\nFound ${details.count} results in ${time}ms`;
             }
 
-            message.textContent = text;
             toast.classList.add('show');
-
             clearTimeout(toastTimeout);
             toastTimeout = setTimeout(() => {
                 toast.classList.remove('show');
             }, 4000);
         }
 
-        // Highlight Active Index (Viva Feature)
+        function showSlowNotification(func, duration) {
+            const notification = document.getElementById('notification');
+            const body = notification.querySelector('.notification-body');
+
+            body.textContent = `Function "${func}" took ${duration}ms (threshold: ${thresholds.slow}ms)`;
+
+            notification.classList.add('show');
+            clearTimeout(notificationTimeout);
+            notificationTimeout = setTimeout(() => {
+                notification.classList.remove('show');
+            }, 5000);
+        }
+
         function highlightActiveIndex(field) {
-            document.querySelectorAll('th').forEach(th => {
-                th.classList.remove('index-hit');
-            });
-
-            const columnMap = {
-                'duration': 3,
-                'ram': 4,
-                'timestamp': 0,
-                'func': 1
-            };
-
+            document.querySelectorAll('th').forEach(th => th.classList.remove('index-hit'));
+            const columnMap = { 'duration': 3, 'ram': 4, 'func': 1 };
             const headers = document.querySelectorAll('th');
-            const targetIndex = columnMap[field];
-            if (headers[targetIndex]) {
-                headers[targetIndex].classList.add('index-hit');
+            if (headers[columnMap[field]]) {
+                headers[columnMap[field]].classList.add('index-hit');
             }
         }
 
@@ -545,15 +766,12 @@
                 if (response.ok) {
                     const logs = await response.json();
                     updateTable(logs);
+                    updateQuickStats(logs);
+                    checkForSlowFunctions(logs);
 
-                    // ONLY show toast on manual actions (not auto-refresh)
                     if (isManualAction) {
-                        showQueryToast('sort', {
-                            field: sortBy,
-                            order: sortOrder,
-                            count: logs.length
-                        });
-                        isManualAction = false; // Reset flag
+                        showQueryToast('sort', { field: sortBy, order: sortOrder, count: logs.length });
+                        isManualAction = false;
                     }
 
                     document.getElementById('statusDot').classList.remove('connecting');
@@ -566,47 +784,59 @@
             }
         }
 
-        // Get project ID from API key validation, then load thresholds
+        function updateQuickStats(logs) {
+            const durations = logs.map(l => l.duration);
+            const avgDuration = durations.length ? (durations.reduce((a, b) => a + b, 0) / durations.length).toFixed(1) : 0;
+            const slowCount = logs.filter(l => l.duration > thresholds.slow).length;
+            const fastCount = logs.filter(l => l.duration < thresholds.fast).length;
+
+            document.getElementById('totalTraces').textContent = logs.length;
+            document.getElementById('avgDuration').innerHTML = `${avgDuration}<span class="stat-unit">ms</span>`;
+            document.getElementById('slowCount').textContent = slowCount;
+            document.getElementById('fastCount').textContent = fastCount;
+        }
+
+        function checkForSlowFunctions(logs) {
+            logs.forEach(log => {
+                if (log.duration > thresholds.slow) {
+                    const key = `${log.func}-${log.duration}`;
+                    if (!lastSlowFunctions.has(key)) {
+                        showSlowNotification(log.func, log.duration);
+                        lastSlowFunctions.add(key);
+                        if (lastSlowFunctions.size > 10) {
+                            const firstKey = lastSlowFunctions.values().next().value;
+                            lastSlowFunctions.delete(firstKey);
+                        }
+                    }
+                }
+            });
+        }
+
         async function initialize() {
             try {
-                // Get project info from API key
                 const response = await fetch('/api/project/info', {
                     headers: { 'X-API-Key': apiKey }
                 });
-
                 if (response.ok) {
                     const projectInfo = await response.json();
                     projectId = projectInfo.id;
-                    console.log('Project loaded:', projectInfo);
-
-                    // Load thresholds for this project
                     await loadThresholds();
-
-                    // Start fetching logs
                     fetchLogs();
                     setInterval(fetchLogs, 2000);
                 } else {
                     document.getElementById('statusText').textContent = 'Invalid API Key';
                 }
             } catch (error) {
-                console.error('Initialization error:', error);
-                // Fallback - try to work without thresholds
                 fetchLogs();
                 setInterval(fetchLogs, 2000);
             }
         }
 
-        // Start initialization
         initialize();
 
         function updateTable(logs) {
             const tbody = document.getElementById('logsTable');
-            const serverTime = new Date().toLocaleTimeString();
-
-            // Store all logs for filtering
             window.allLogs = logs;
-
-            // Apply filters
             const filtered = filterLogs(logs);
 
             if (filtered.length === 0) {
@@ -629,15 +859,10 @@
                 tbody.appendChild(row);
             });
 
-            // Show query stats
-            const statsDiv = document.getElementById('queryStats');
-            if (statsDiv) {
-                const filterText = filtered.length < logs.length ? ` (${filtered.length} filtered)` : '';
-                statsDiv.textContent = `${logs.length} records${filterText} • ${serverTime} • Thresholds: ${thresholds.fast}/${thresholds.slow}ms`;
-            }
+            const filterText = filtered.length < logs.length ? ` (${filtered.length} filtered)` : '';
+            document.getElementById('queryStats').textContent = `${logs.length} records${filterText}`;
         }
 
-        // Filter logs based on search criteria
         function filterLogs(logs) {
             const funcFilter = document.getElementById('searchFunc')?.value.toLowerCase() || '';
             const msgFilter = document.getElementById('searchMsg')?.value.toLowerCase() || '';
@@ -648,19 +873,14 @@
                 const matchFunc = !funcFilter || log.func.toLowerCase().includes(funcFilter);
                 const matchMsg = !msgFilter || log.message.toLowerCase().includes(msgFilter);
                 const matchDuration = log.duration >= minDur && log.duration <= maxDur;
-
                 return matchFunc && matchMsg && matchDuration;
             });
         }
 
-        // Apply filters to current logs
         function applyFilters() {
-            if (window.allLogs) {
-                updateTable(window.allLogs);
-            }
+            if (window.allLogs) updateTable(window.allLogs);
         }
 
-        // Clear all filters
         function clearFilters() {
             document.getElementById('searchFunc').value = '';
             document.getElementById('searchMsg').value = '';
@@ -669,25 +889,18 @@
             applyFilters();
         }
 
-        // Export to CSV
         function exportCSV() {
             if (!window.allLogs || window.allLogs.length === 0) {
                 alert('No data to export');
                 return;
             }
-
             const filtered = filterLogs(window.allLogs);
             const csv = [
                 ['Function', 'Message', 'Duration (ms)', 'RAM (KB)', 'Version'].join(','),
                 ...filtered.map(log => [
-                    `"${log.func}"`,
-                    `"${log.message}"`,
-                    log.duration,
-                    log.ram,
-                    `"${log.app_version}"`
+                    `"${log.func}"`, `"${log.message}"`, log.duration, log.ram, `"${log.app_version}"`
                 ].join(','))
             ].join('\n');
-
             const blob = new Blob([csv], { type: 'text/csv' });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -697,16 +910,13 @@
             window.URL.revokeObjectURL(url);
         }
 
-        // Export to JSON
         function exportJSON() {
             if (!window.allLogs || window.allLogs.length === 0) {
                 alert('No data to export');
                 return;
             }
-
             const filtered = filterLogs(window.allLogs);
             const json = JSON.stringify(filtered, null, 2);
-
             const blob = new Blob([json], { type: 'application/json' });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -715,9 +925,6 @@
             a.click();
             window.URL.revokeObjectURL(url);
         }
-
-        fetchLogs();
-        setInterval(fetchLogs, 2000);
     </script>
 </body>
 

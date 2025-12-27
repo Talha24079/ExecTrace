@@ -26,3 +26,6 @@ backend/data/
 # Temporary files
 *.tmp
 *.log
+
+# Sensitive Documentation
+VIVA_DEFENSE_GUIDE.md

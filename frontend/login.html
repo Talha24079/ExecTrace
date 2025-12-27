@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ExecTrace - Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -12,142 +13,318 @@
             box-sizing: border-box;
         }
 
+        :root {
+            --primary-600: #2563eb;
+            --primary-700: #1d4ed8;
+            --primary-50: #eff6ff;
+            --accent-500: #06b6d4;
+            --success-500: #10b981;
+            --error-500: #ef4444;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --bg-gradient: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%);
+        }
+
         body {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-gradient);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Animated Background */
+        body::before {
+            content: '';
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 20% 50%, rgba(37, 99, 235, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(6, 182, 212, 0.3) 0%, transparent 50%);
+            animation: moveBackground 20s ease infinite;
+        }
+
+        @keyframes moveBackground {
+
+            0%,
+            100% {
+                transform: translate(0, 0);
+            }
+
+            50% {
+                transform: translate(-50px, -50px);
+            }
         }
 
         .container {
             background: white;
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-            width: 400px;
+            padding: 48px 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 440px;
+            position: relative;
+            z-index: 1;
+            animation: slideUp 0.6s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .logo-container {
+            text-align: center;
+            margin-bottom: 32px;
         }
 
         h1 {
-            text-align: center;
-            margin-bottom: 30px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-size: 32px;
+            font-weight: 700;
+            background: var(--bg-gradient);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+
+        .tagline {
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
         }
 
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 24px;
+            animation: fadeIn 0.6s ease backwards;
+        }
+
+        .form-group:nth-child(1) {
+            animation-delay: 0.1s;
+        }
+
+        .form-group:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .form-group:nth-child(3) {
+            animation-delay: 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
         }
 
         label {
             display: block;
-            margin-bottom: 5px;
-            color: #333;
-            font-weight: 500;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: 14px;
         }
 
         input {
             width: 100%;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 6px;
-            font-size: 14px;
-            transition: border 0.3s;
+            padding: 14px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 15px;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.3s ease;
+            background: white;
         }
 
         input:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: var(--primary-600);
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+            transform: translateY(-2px);
+        }
+
+        input::placeholder {
+            color: #94a3b8;
         }
 
         button {
             width: 100%;
-            padding: 14px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 16px;
+            background: var(--bg-gradient);
             color: white;
             border: none;
-            border-radius: 6px;
+            border-radius: 10px;
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            transition: opacity 0.3s;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
+            font-family: 'Inter', sans-serif;
         }
 
         button:hover {
-            opacity: 0.9;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(37, 99, 235, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
         }
 
         .switch {
             text-align: center;
-            margin-top: 20px;
-            color: #666;
+            margin-top: 24px;
+            color: var(--text-secondary);
+            font-size: 14px;
         }
 
         .switch a {
-            color: #667eea;
+            color: var(--primary-600);
             text-decoration: none;
             font-weight: 600;
+            transition: color 0.3s ease;
+        }
+
+        .switch a:hover {
+            color: var(--primary-700);
+            text-decoration: underline;
+        }
+
+        .message {
+            padding: 14px 16px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            display: none;
+            animation: slideDown 0.4s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .error {
-            background: #ffe0e0;
-            color: #c00;
-            padding: 10px;
-            border-radius: 6px;
-            margin-bottom: 15px;
-            display: none;
+            background: #fee2e2;
+            color: #991b1b;
+            border-left: 4px solid var(--error-500);
         }
 
         .success {
-            background: #e0ffe0;
-            color: #080;
-            padding: 10px;
-            border-radius: 6px;
-            margin-bottom: 15px;
-            display: none;
+            background: #d1fae5;
+            color: #065f46;
+            border-left: 4px solid var(--success-500);
+        }
+
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 480px) {
+            .container {
+                padding: 32px 24px;
+                margin: 16px;
+            }
+
+            h1 {
+                font-size: 28px;
+            }
         }
     </style>
 </head>
 
 <body>
     <div class="container">
-        <h1>ExecTrace</h1>
-        <div id="error" class="error"></div>
-        <div id="success" class="success"></div>
+        <div class="logo-container">
+            <h1>ExecTrace</h1>
+            <p class="tagline">Performance monitoring made simple</p>
+        </div>
+
+        <div id="error" class="message error"></div>
+        <div id="success" class="message success"></div>
 
         <div id="loginForm">
             <div class="form-group">
-                <label>Email</label>
-                <input type="email" id="loginEmail" placeholder="your@email.com">
+                <label>Email Address</label>
+                <input type="email" id="loginEmail" placeholder="your@email.com" autocomplete="email">
             </div>
             <div class="form-group">
                 <label>Password</label>
-                <input type="password" id="loginPassword" placeholder="••••••••">
+                <input type="password" id="loginPassword" placeholder="Enter your password"
+                    autocomplete="current-password">
             </div>
-            <button onclick="login()">Login</button>
+            <button onclick="login()" id="loginBtn">
+                Sign In
+            </button>
             <div class="switch">
-                Don't have an account? <a href="#" onclick="showRegister(); return false;">Register</a>
+                Don't have an account? <a href="#" onclick="showRegister(); return false;">Create one</a>
             </div>
         </div>
 
         <div id="registerForm" style="display:none;">
             <div class="form-group">
-                <label>Username</label>
-                <input type="text" id="regUsername" placeholder="Your Name">
+                <label>Full Name</label>
+                <input type="text" id="regUsername" placeholder="John Doe" autocomplete="name">
             </div>
             <div class="form-group">
-                <label>Email</label>
-                <input type="email" id="regEmail" placeholder="your@email.com">
+                <label>Email Address</label>
+                <input type="email" id="regEmail" placeholder="your@email.com" autocomplete="email">
             </div>
             <div class="form-group">
                 <label>Password</label>
-                <input type="password" id="regPassword" placeholder="••••••••">
+                <input type="password" id="regPassword" placeholder="Create a strong password"
+                    autocomplete="new-password">
             </div>
-            <button onclick="register()">Register</button>
+            <button onclick="register()" id="registerBtn">
+                Create Account
+            </button>
             <div class="switch">
-                Already have an account? <a href="#" onclick="showLogin(); return false;">Login</a>
+                Already have an account? <a href="#" onclick="showLogin(); return false;">Sign in</a>
             </div>
         </div>
     </div>
@@ -156,14 +333,16 @@
         const API_URL = 'http://localhost:9090';
 
         function showError(msg) {
-            document.getElementById('error').textContent = msg;
-            document.getElementById('error').style.display = 'block';
+            const errorEl = document.getElementById('error');
+            errorEl.textContent = msg;
+            errorEl.style.display = 'block';
             document.getElementById('success').style.display = 'none';
         }
 
         function showSuccess(msg) {
-            document.getElementById('success').textContent = msg;
-            document.getElementById('success').style.display = 'block';
+            const successEl = document.getElementById('success');
+            successEl.textContent = msg;
+            successEl.style.display = 'block';
             document.getElementById('error').style.display = 'none';
         }
 
@@ -184,16 +363,38 @@
             document.getElementById('loginForm').style.display = 'block';
         }
 
+        function validateEmail(email) {
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+        }
+
+        function validatePassword(password) {
+            return password.length >= 6;
+        }
+
         async function register() {
             hideMessages();
-            const username = document.getElementById('regUsername').value;
-            const email = document.getElementById('regEmail').value;
+            const username = document.getElementById('regUsername').value.trim();
+            const email = document.getElementById('regEmail').value.trim();
             const password = document.getElementById('regPassword').value;
+            const btn = document.getElementById('registerBtn');
 
             if (!username || !email || !password) {
-                showError('All fields required');
+                showError('All fields are required');
                 return;
             }
+
+            if (!validateEmail(email)) {
+                showError('Please enter a valid email address');
+                return;
+            }
+
+            if (!validatePassword(password)) {
+                showError('Password must be at least 6 characters');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading"></span>Creating account...';
 
             try {
                 const response = await fetch(`${API_URL}/api/auth/register`, {
@@ -205,25 +406,32 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    showSuccess('Registration successful! Please login.');
+                    showSuccess('✓ Account created successfully! Redirecting to login...');
                     setTimeout(showLogin, 1500);
                 } else {
-                    showError(data.error || 'Registration failed');
+                    showError(data.error || 'Registration failed. Please try again.');
                 }
             } catch (e) {
-                showError('Network error: ' + e.message);
+                showError('Network error. Please check your connection.');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Create Account';
             }
         }
 
         async function login() {
             hideMessages();
-            const email = document.getElementById('loginEmail').value;
+            const email = document.getElementById('loginEmail').value.trim();
             const password = document.getElementById('loginPassword').value;
+            const btn = document.getElementById('loginBtn');
 
             if (!email || !password) {
-                showError('Email and password required');
+                showError('Email and password are required');
                 return;
             }
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading"></span>Signing in...';
 
             try {
                 const response = await fetch(`${API_URL}/api/auth/login`, {
@@ -235,16 +443,54 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    localStorage.setItem('user_id', data.user_id);
-                    localStorage.setItem('username', data.username);
-                    window.location.href = '/workspace';
+                    // FIXED: Robust ID extraction to handle common backend key variations
+                    const uid = data.user_id || data.userId || data.id;
+                    const uname = data.username || data.user || data.name || 'User';
+                    const urole = data.role !== undefined ? data.role : 0; // Default to User role
+
+                    if (!uid) {
+                        console.error('Login Error: ID missing in response', data);
+                        showError('Login successful, but server returned invalid user data.');
+                        btn.disabled = false;
+                        btn.innerHTML = 'Sign In';
+                        return;
+                    }
+
+                    localStorage.setItem('user_id', uid);
+                    localStorage.setItem('username', uname);
+                    localStorage.setItem('user_role', urole.toString());
+
+                    const roleNames = ['User', 'Editor', 'Admin'];
+                    console.log(`Login success: ${uname} (Role: ${roleNames[urole] || 'Unknown'})`);
+
+                    showSuccess('✓ Login successful! Redirecting...');
+                    setTimeout(() => {
+                        window.location.href = '/workspace';
+                    }, 800);
                 } else {
-                    showError(data.error || 'Login failed');
+                    showError(data.error || 'Invalid credentials. Please try again.');
                 }
             } catch (e) {
-                showError('Network error: ' + e.message);
+                console.error(e);
+                showError('Network error. Please check your connection.');
+            } finally {
+                if (!document.getElementById('success').style.display || document.getElementById('success').style.display === 'none') {
+                    btn.disabled = false;
+                    btn.innerHTML = 'Sign In';
+                }
             }
         }
+
+        document.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                const loginVisible = document.getElementById('loginForm').style.display !== 'none';
+                if (loginVisible) {
+                    login();
+                } else {
+                    register();
+                }
+            }
+        });
     </script>
 </body>
 
