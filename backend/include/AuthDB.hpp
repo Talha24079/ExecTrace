@@ -251,6 +251,20 @@ public:
         return true;
     }
 
+    void rebuild_project_tree(const std::vector<ExecTrace::ProjectEntry>& projects) {
+        delete project_tree;
+        delete project_dm;
+
+        std::remove(project_db_path.c_str());
+
+        project_dm = new DiskManager(project_db_path);
+        project_tree = new BTree<ExecTrace::ProjectEntry>(project_dm);
+
+        for (const auto& project : projects) {
+            project_tree->insert(project);
+        }
+    }
+
     bool delete_project(int project_id) {
         std::lock_guard<std::mutex> lock(auth_mutex);
 
@@ -263,13 +277,27 @@ public:
             return false;
         }
 
-        ExecTrace::ProjectEntry project = results[0];
+        // Get all projects
+        auto all_projects = project_tree->get_all_values();
+        std::vector<ExecTrace::ProjectEntry> kept_projects;
+        bool found = false;
 
-        project.is_deleted = true;
+        // Filter out the deleted project
+        for (const auto& project : all_projects) {
+            if (project.project_id == project_id) {
+                found = true;
+                // Don't add to kept_projects - effectively deleting it
+            } else {
+                kept_projects.push_back(project);
+            }
+        }
 
-        project_tree->insert(project);
+        if (!found) return false;
+
+        // Rebuild the tree with only the kept projects
+        rebuild_project_tree(kept_projects);
         
-        std::cout << "[AuthDB] Project " << project_id << " marked as deleted" << std::endl;
+        std::cout << "[AuthDB] Project " << project_id << " permanently deleted and tree rebuilt" << std::endl;
         return true;
     }
 
