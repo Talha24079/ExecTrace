@@ -8,7 +8,6 @@
 
 const int PAGE_SIZE = 4096;
 
-// DiskManager - handles file I/O for database pages
 class DiskManager {
 private:
     std::string db_filename;
@@ -21,7 +20,7 @@ public:
         db_file.open(filename, std::ios::in | std::ios::out | std::ios::binary);
         
         if (!db_file.is_open()) {
-            // Create new file
+            
             db_file.clear();
             db_file.open(filename, std::ios::out | std::ios::binary);
             db_file.close();
@@ -33,7 +32,7 @@ public:
             
             std::cout << "[DiskManager] Created new database: " << filename << std::endl;
         } else {
-            // Calculate number of existing pages
+            
             db_file.seekg(0, std::ios::end);
             size_t file_size = db_file.tellg();
             next_page_id = (file_size / PAGE_SIZE) + 1;
@@ -58,13 +57,12 @@ public:
 
     void read_page(int page_id, char* data) {
         std::lock_guard<std::mutex> lock(file_mutex);
-        
-        // Check if page exists
+
         db_file.seekg(0, std::ios::end);
         size_t file_size = db_file.tellg();
         
         if (page_id * PAGE_SIZE >= file_size) {
-            // Page doesn't exist, return zeroed data
+            
             memset(data, 0, PAGE_SIZE);
             return;
         }

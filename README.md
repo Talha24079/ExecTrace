@@ -11,6 +11,8 @@
 - [Overview](#overview)
 - [Features](#features)
 - [Architecture](#architecture)
+- [Project Structure](#project-structure)
+- [Key Components](#key-components)
 - [Quick Start](#quick-start)
 - [Installation](#installation)
 - [Usage](#usage)
@@ -57,30 +59,23 @@
 
 ## 🏗️ Architecture
 
-```
-ExecTrace/
-├── sdk/                    # C++ SDK (header-only)
-│   ├── exectrace.hpp      # Main SDK header
-│   └── test_sdk.cpp       # SDK usage examples
-├── backend/               # C++ Server (Crow framework)
-│   ├── src/
-│   │   └── server.cpp     # Main server implementation
-│   ├── include/
-│   │   ├── Database.hpp   # Trace database interface
-│   │   ├── AuthDB.hpp     # User & project management
-│   │   └── crow_include/  # Crow web framework
-│   └── data/              # SQLite databases (auto-created)
-├── frontend/              # Web Dashboard
-│   ├── login.html         # Authentication page
-│   ├── dashboard.html     # Main analytics view
-│   └── workspace.html     # Project management
-└── docker-compose.yml     # Container orchestration
-```
+### Backend (C++)
+The backend is a high-performance C++ server built with:
+- **Server Framework:** Crow (C++ Microframework)
+- **Database:** Custom B-Tree implementation persisted to disk
+- **Concurrency:** Thread-safe operations using `std::mutex` and persistent locks
+- **Architecture:** Monolithic server handling both API requests and static file serving
+
+### Frontend (HTML/CSS/JS)
+The frontend is a lightweight, dependency-free Single Page Application (SPA) feel:
+- **Tech Stack:** Vanilla HTML5, CSS3 (Inter font), and JavaScript (ES6+)
+- **Design:** Modern glassmorphism UI with responsive layout
+- **Communication:** Fetch API for REST communication with backend
 
 ### Communication Flow
 
 ```
-[Your C++ App] ──(1)──> [ExecTrace SDK] ──(HTTP/curl)──> [Server:8080] ──> [SQLite DB]
+[Your C++ App] ──(1)──> [ExecTrace SDK] ──(HTTP/curl)──> [Server:8080] ──> [B-Tree DB]
                                                                 ↓
                                                          [Dashboard UI]
 ```
@@ -89,6 +84,49 @@ ExecTrace/
 2. **Transport**: SDK sends trace data via HTTP POST with API key
 3. **Server Side**: Crow-based server receives, parses, and stores traces
 4. **Visualization**: Web dashboard queries server for analytics
+
+## 📂 Project Structure
+
+```
+ExecTrace/
+├── backend/
+│   ├── src/
+│   │   └── server.cpp       # Main server entry point & API routes
+│   ├── include/
+│   │   ├── AuthDB.hpp       # User & Project management (uses BTree)
+│   │   ├── BTree.hpp        # Core database data structure
+│   │   ├── Database.hpp     # Trace storage logic
+│   │   ├── DiskManager.hpp  # Low-level disk I/O
+│   │   ├── Models.hpp       # Data structures (User, Project, Trace)
+│   │   └── Utils.hpp        # Utilities (Validation, RateLimiter, Logger)
+│   └── data/                # Persistent database files (*.db)
+├── frontend/
+│   ├── login.html           # Authentication page
+│   ├── workspace.html       # Main user dashboard (Project Management)
+│   ├── dashboard.html       # Individual project visualization
+│   └── admin.html           # Admin capabilities (User Management)
+└── sdk/                     # Client SDKs for integration
+```
+
+## 🔑 Key Components
+
+### Authentication & RBAC
+- **Users:** Managed via `AuthDB`. Password hashing uses simple SHA-256.
+- **Roles:**
+  - `Admin` (ID=1): Full access, can manage users.
+  - `Editor`: Can edit projects.
+  - `User`: Standard access.
+- **Safety:** The database automatically rebuilds itself on role changes to prevent duplication bugs.
+
+### Database (B-Tree)
+- Custom disk-based B-Tree implementation (`BTree.hpp`).
+- Stores `UserEntry`, `ProjectEntry`, and `TraceEntry` structs.
+- Supports high-performance searching by hash or ID.
+
+### Utilities (`Utils.hpp`)
+- **Validation:** Input sanitization for security (XSS prevention, SQLi prevention).
+- **RateLimiter:** Token bucket algorithm to limit API requests.
+- **Logger:** Thread-safe logging to file and console.
 
 ## 🚀 Quick Start
 
@@ -133,7 +171,7 @@ void processData() {
 
 ### 3. View Results
 
-Navigate to `http://localhost:9090/dashboard` to see your traces in real-time!
+Navigate to `http://localhost:9090` to see your traces in real-time!
 
 ## 📦 Installation
 
@@ -151,38 +189,6 @@ Navigate to `http://localhost:9090/dashboard` to see your traces in real-time!
 
 **For Docker Deployment**:
 - Docker & Docker Compose
-
-### Platform-Specific Setup
-
-#### Windows
-
-1. **Install Visual Studio 2019+** with C++ build tools
-2. **Install vcpkg** (for Boost):
-   ```cmd
-   git clone https://github.com/Microsoft/vcpkg.git
-   cd vcpkg
-   .\bootstrap-vcpkg.bat
-   .\vcpkg integrate install
-   .\vcpkg install boost:x64-windows
-   ```
-
-3. **Copy SDK header** to your project:
-   ```cmd
-   copy ExecTrace\sdk\exectrace.hpp YourProject\include\
-   ```
-
-#### Linux
-
-1. **Install dependencies**:
-   ```bash
-   sudo apt update
-   sudo apt install build-essential libboost-all-dev
-   ```
-
-2. **Copy SDK header**:
-   ```bash
-   cp ExecTrace/sdk/exectrace.hpp your_project/include/
-   ```
 
 ## 💻 Usage
 
@@ -232,26 +238,6 @@ long ram_kb = ExecTrace::get_current_ram_kb();
 ExecTrace::log("CustomOperation", duration, ram_kb, "Custom metric");
 ```
 
-### Server Configuration
-
-The server runs on port **8080** by default (mapped to **9090** in Docker). Key endpoints:
-
-- `GET /` - Dashboard landing page
-- `POST /log` - Submit trace data
-- `GET /logs/<project_id>` - Retrieve project traces
-- `GET /health` - Health check
-
-### API Key Management
-
-1. Navigate to `http://localhost:9090/login`
-2. Create an account or login
-3. Create a new project to get an API key
-4. Use the API key in your SDK initialization:
-
-```cpp
-ExecTrace::init("abc123xyz456", "v1.0.0");
-```
-
 ## 📚 API Documentation
 
 ### SDK API
@@ -278,56 +264,24 @@ void ExecTrace::log(
 );
 ```
 
-#### Utility Functions
-
-```cpp
-long ExecTrace::get_current_ram_kb();  // Get current process RAM usage
-std::string ExecTrace::auto_version(); // Auto-detect version from ENV
-```
-
 ### REST API Endpoints
 
-#### POST /log
-Submit a trace event.
+#### Auth
+- `POST /api/auth/register` - Create account
+- `POST /api/auth/login` - Login
 
-**Headers**:
-- `X-API-Key`: Your project API key
+#### Projects
+- `POST /api/projects` - Create project
+- `GET /api/projects` - List user projects
+- `POST /api/projects/:id/settings` - Update thresholds
 
-**Body** (URL-encoded):
-```
-func=functionName&message=description&duration=123&ram=4096&version=v1.0.0
-```
+#### Admin
+- `GET /api/admin/users` - List all users
+- `POST /api/admin/users/:id/role` - Update user role
+- `POST /api/admin/users/:id/deactivate` - Deactivate user
 
-**Response**:
-```json
-{
-  "status": "ok",
-  "id": 42
-}
-```
-
-#### GET /logs/:project_id
-Retrieve traces for a project.
-
-**Response**:
-```json
-{
-  "status": "ok",
-  "count": 100,
-  "logs": [
-    {
-      "id": 1,
-      "project_id": 1,
-      "func": "processData",
-      "message": "Auto-traced",
-      "app_version": "v1.0.0",
-      "duration": 125,
-      "ram_usage": 8192,
-      "timestamp": 1703597182
-    }
-  ]
-}
-```
+#### Tracing
+- `POST /api/trace` - Ingest performance data (`func`, `message`, `duration`, `ram`, `version`)
 
 ## 🔨 Building from Source
 
@@ -347,20 +301,6 @@ g++ -std=c++17 -DCROW_USE_BOOST \
 ./et-server
 ```
 
-### Build Server (Windows)
-
-```cmd
-cd ExecTrace\backend
-
-cl /std:c++17 /EHsc /DCROW_USE_BOOST ^
-   /I include\crow_include ^
-   src\server.cpp ^
-   /Fe:et-server.exe ^
-   /link /LIBPATH:C:\vcpkg\installed\x64-windows\lib
-
-et-server.exe
-```
-
 ### Build SDK Test
 
 ```bash
@@ -369,10 +309,6 @@ cd ExecTrace/sdk
 # Linux
 g++ -std=c++17 test_sdk.cpp -o test_sdk -pthread
 ./test_sdk
-
-# Windows
-cl /std:c++17 test_sdk.cpp /Fe:test_sdk.exe
-test_sdk.exe
 ```
 
 ## 🐳 Docker Deployment
@@ -383,99 +319,27 @@ test_sdk.exe
 docker-compose up -d
 ```
 
-### Custom Configuration
-
-Edit `docker-compose.yml` to customize ports:
-
-```yaml
-services:
-  exectrace:
-    build: .
-    ports:
-      - "YOUR_PORT:8080"  # Change 9090 to your preferred port
-    restart: unless-stopped
-```
-
-### View Logs
-
+### Database Reset
+To clear all data and start fresh:
 ```bash
-docker logs exectrace-server
+docker-compose down
+rm backend/data/*.db
+docker-compose up -d
 ```
-
-### Rebuild
-
-```bash
-docker-compose up -d --build
-```
-
-## 🔧 Platform-Specific Notes
-
-### Windows Compatibility
-
-ExecTrace v3.1+ includes full Windows support:
-
-- ✅ SDK uses proper cmd.exe syntax (double quotes)
-- ✅ Platform-specific directory handling
-- ✅ Visual Studio project integration
-- ✅ Working directory detection on startup
-
-### Linux Optimizations
-
-- Uses `/dev/null` for silent curl execution
-- POSIX-compliant directory operations
-- Systemd service support (optional)
-
-## 🐛 Troubleshooting
-
-### "Database files not found"
-
-The server prints the current working directory on startup. Check the console output:
-
-```
-[Server] Current Working Directory: /path/to/your/exe
-```
-
-Database files are in `backend/data/` relative to this path.
-
-### "API key not working"
-
-**Current Status**: API keys are logged but project ID mapping is not yet implemented. All traces default to Project ID 1 with a warning message. This is a known limitation and will be addressed in a future update.
-
-### "Curl command fails on Windows"
-
-Ensure you're using the latest SDK (v3.1+) which includes Windows-specific curl syntax.
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please follow these steps:
+Contributions are welcome! Please open a Pull Request.
 
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
 5. Open a Pull Request
-
-### Development Priorities
-
-- [ ] Implement full API key → Project ID mapping
-- [ ] Add gRPC transport option (faster than HTTP)
-- [ ] Create SDKs for other languages (Python, Go, Rust)
-- [ ] Real-time WebSocket streaming
-- [ ] Advanced analytics and ML-based anomaly detection
 
 ## 📝 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- [Crow](https://github.com/CrowCpp/Crow) - Fast and easy to use C++ micro web framework
-- [SQLite](https://www.sqlite.org/) - Embedded database engine
-- [Boost](https://www.boost.org/) - C++ libraries
-
-## 📧 Contact
-
-Project Link: [https://github.com/yourusername/ExecTrace](https://github.com/yourusername/ExecTrace)
 
 ---
 

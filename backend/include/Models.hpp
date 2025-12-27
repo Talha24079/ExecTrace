@@ -5,7 +5,6 @@
 
 namespace ExecTrace {
 
-// TraceEntry - represents a single trace log
 struct TraceEntry {
     int id;
     int project_id;
@@ -15,7 +14,7 @@ struct TraceEntry {
     uint64_t duration;
     uint64_t ram_usage;
     time_t timestamp;
-    bool is_deleted; // Soft delete flag
+    bool is_deleted; 
 
     TraceEntry() : id(0), project_id(0), duration(0), ram_usage(0), timestamp(0), is_deleted(false) {
         memset(func, 0, sizeof(func));
@@ -28,13 +27,11 @@ struct TraceEntry {
                uint64_t dur, uint64_t ram) 
         : id(entry_id), project_id(proj_id), duration(dur), 
           ram_usage(ram), timestamp(time(nullptr)), is_deleted(false) {
-        
-        // Initialize arrays
+
         memset(func, 0, sizeof(func));
         memset(message, 0, sizeof(message));
         memset(app_version, 0, sizeof(app_version));
-        
-        // Safe string copies with null checks
+
         if (function) {
             strncpy(func, function, sizeof(func) - 1);
             func[sizeof(func) - 1] = '\0';
@@ -58,14 +55,13 @@ struct TraceEntry {
     bool operator==(const TraceEntry& other) const {
         return id == other.id;
     }
-    
-    // Validate entry data
+
     bool is_valid() const {
         return id > 0 && 
                project_id > 0 &&
-               duration < 3600000 &&  // < 1 hour in ms
-               ram_usage < 104857600 &&  // < 100GB in KB
-               func[0] != '\0' &&  // Not empty
+               duration < 3600000 &&  
+               ram_usage < 104857600 &&  
+               func[0] != '\0' &&  
                !is_deleted;
     }
 
@@ -74,23 +70,21 @@ struct TraceEntry {
     }
 };
 
-// Role types enumeration
 enum UserRole {
-    ROLE_USER = 0,    // Basic user - can only access own projects
-    ROLE_EDITOR = 1,  // Can be assigned to projects as collaborator
-    ROLE_ADMIN = 2    // Full system access
+    ROLE_USER = 0,    
+    ROLE_EDITOR = 1,  
+    ROLE_ADMIN = 2    
 };
 
-// UserEntry - represents a user account
 struct UserEntry {
     int user_id;
     char email[128];
     uint64_t email_hash;
     char password_hash[65];
     char username[64];
-    int role;         // NEW: User role (0=User, 1=Editor, 2=Admin)
-    bool is_active;   // NEW: Account status (for soft deletion)
-    time_t created_at; // NEW: Account creation timestamp
+    int role;         
+    bool is_active;   
+    time_t created_at; 
 
     UserEntry() : user_id(0), email_hash(0), role(ROLE_USER), 
                   is_active(true), created_at(time(nullptr)) {
@@ -112,16 +106,14 @@ struct UserEntry {
     }
 };
 
-// ProjectEntry - represents a project with API key
-// Assuming Serializable is defined elsewhere
-struct ProjectEntry /*: public Serializable*/ { // Commented out inheritance as Serializable is not defined in the provided context
+struct ProjectEntry  { 
     int project_id;
     int user_id;
     char name[128];
     char api_key[64];
     int fast_threshold;
     int normal_threshold;
-    bool is_deleted;  // Soft delete flag
+    bool is_deleted;  
     
     ProjectEntry() : project_id(0), user_id(0), fast_threshold(100), 
                     normal_threshold(500), is_deleted(false) {
@@ -133,34 +125,11 @@ struct ProjectEntry /*: public Serializable*/ { // Commented out inheritance as 
         : project_id(pid), user_id(uid), fast_threshold(100), 
           normal_threshold(500), is_deleted(false) {
         strncpy(name, n.c_str(), sizeof(name) - 1);
-        name[sizeof(name) - 1] = '\0'; // Ensure null termination
+        name[sizeof(name) - 1] = '\0'; 
         strncpy(api_key, key.c_str(), sizeof(api_key) - 1);
-        api_key[sizeof(api_key) - 1] = '\0'; // Ensure null termination
+        api_key[sizeof(api_key) - 1] = '\0'; 
     }
-    
-    // These methods require 'Serializable' base class
-    /*
-    std::vector<uint8_t> serialize() const override {
-        std::vector<uint8_t> data;
-        data.resize(sizeof(ProjectEntry));
-        memcpy(data.data(), this, sizeof(ProjectEntry));
-        return data;
-    }
-    
-    void deserialize(const std::vector<uint8_t>& data) override {
-        if (data.size() == sizeof(ProjectEntry)) {
-            memcpy(this, data.data(), sizeof(ProjectEntry));
-        } else {
-            // Handle old format without is_deleted
-            size_t old_size = sizeof(ProjectEntry) - sizeof(bool);
-            if (data.size() == old_size) {
-                memcpy(this, data.data(), old_size);
-                is_deleted = false;  // Default value for old entries
-            }
-        }
-    }
-    */
-    
+
     bool operator<(const ProjectEntry& other) const {
         return project_id < other.project_id;
     }
@@ -168,19 +137,17 @@ struct ProjectEntry /*: public Serializable*/ { // Commented out inheritance as 
     bool operator==(const ProjectEntry& other) const {
         return project_id == other.project_id;
     }
-    
-    
+
     bool operator>(const ProjectEntry& other) const {
         return project_id > other.project_id;
     }
 };
 
-// ProjectCollaborator - represents a user assigned to a project
 struct ProjectCollaborator {
     int id;
     int project_id;
     int user_id;
-    int role;  // 0=Viewer (future), 1=Editor, 2=Owner
+    int role;  
     time_t added_at;
     
     ProjectCollaborator() : id(0), project_id(0), user_id(0), 
@@ -203,12 +170,11 @@ struct ProjectCollaborator {
     }
 };
 
-// AuditLog - tracks admin actions for security and compliance
 struct AuditLog {
     int id;
-    int user_id;        // Who performed the action
-    char action[256];   // What action was performed
-    char details[512];  // Additional details (JSON or plain text)
+    int user_id;        
+    char action[256];   
+    char details[512];  
     time_t timestamp;
     
     AuditLog() : id(0), user_id(0), timestamp(time(nullptr)) {
@@ -245,4 +211,4 @@ struct AuditLog {
     }
 };
 
-} // namespace ExecTrace
+} 

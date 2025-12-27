@@ -45,7 +45,7 @@ namespace ExecTrace {
     inline std::string auto_version() {
         const char* env_ver = std::getenv("APP_VERSION");
         if (env_ver) return std::string(env_ver);
-        return "v1.0.0";  // Clean default version for proper sorting
+        return "v1.0.0";  
     }
 
     inline void init(const std::string& api_key, const std::string& version = "",
@@ -67,12 +67,12 @@ namespace ExecTrace {
 
         std::thread([post_data]() {
 #ifdef _WIN32
-            // Windows: Use double quotes and NUL redirect (silent mode for clean output)
+            
             std::string cmd = "curl -s -X POST " + g_server_url + "/log "
                 "-H \"X-API-Key: " + g_api_key + "\" "
                 "-d \"" + post_data + "\" > NUL 2>&1";
 #else
-            // Linux: Use single quotes and /dev/null (silent mode)
+            
             std::string cmd = "curl -s -X POST " + g_server_url + "/log "
                 "-H 'X-API-Key: " + g_api_key + "' "
                 "-d '" + post_data + "' > /dev/null 2>&1";

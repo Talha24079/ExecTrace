@@ -12,23 +12,19 @@
 #include <thread>
 #include <mutex>
 
-// Platform-specific includes for directory operations
 #ifdef _WIN32
-#include <direct.h>   // _getcwd, _mkdir
+#include <direct.h>   
 #include <windows.h>
 #else
-#include <unistd.h>   // getcwd
-#include <sys/stat.h> // mkdir
+#include <unistd.h>   
+#include <sys/stat.h> 
 #endif
 
-// Global database pointers
 ExecTraceDB* trace_db = nullptr;
 AuthDB* auth_db = nullptr;
 
-// Global rate limiter
 RateLimiter rate_limiter;
 
-// Helper to ensure data directory exists (creates parent directories if needed)
 void ensure_directory_exists(const std::string& path) {
 #ifdef _WIN32
     struct _stat st;
@@ -47,8 +43,7 @@ void ensure_directory_exists(const std::string& path) {
 
 int main() {
     std::cout << "=== ExecTrace Server (Phase 3.1 - Routing Fixed) ===" << std::endl;
-    
-    // Print current working directory
+
 #ifdef _WIN32
     char cwd[MAX_PATH];
     if (_getcwd(cwd, sizeof(cwd)) != nullptr) {
@@ -60,16 +55,13 @@ int main() {
         std::cout << "[Server] Current Working Directory: " << cwd << std::endl;
     }
 #endif
-    
-    // Ensure data directory exists (create parent first)
+
     ensure_directory_exists("backend");
     ensure_directory_exists("backend/data");
-    
-    // Initialize logger
+
     init_logger("backend/data/server.log");
     log_info("Server", "Starting ExecTrace server...");
-    
-    // Initialize databases
+
     try {
         auth_db = new AuthDB("backend/data/users.db", "backend/data/projects.db");
         trace_db = new ExecTraceDB("backend/data/traces.db");
@@ -78,13 +70,11 @@ int main() {
         std::cerr << "[Server ERROR] Failed to initialize databases: " << e.what() << std::endl;
         return 1;
     }
-    
-    // Use SimpleApp (no middleware)
+
     crow::SimpleApp app;
     
     std::cout << "[Server] Registering routes..." << std::endl;
-    
-    // Helper to read files
+
     auto read_file = [](const std::string& path) -> std::string {
         std::ifstream file(path);
         if (!file.is_open()) return "";
@@ -92,8 +82,7 @@ int main() {
         buffer << file.rdbuf();
         return buffer.str();
     };
-    
-    // Frontend routes
+
     CROW_ROUTE(app, "/")
     ([&read_file](){
         auto content = read_file("frontend/login.html");
@@ -159,27 +148,22 @@ int main() {
         resp.add_header("Content-Type", "text/html");
         return resp;
     });
-    
-    
-    // Health check endpoint
+
     CROW_ROUTE(app, "/health")
     ([](){
         std::cout << "[/health] Request received" << std::endl;
         std::cout.flush();
         return "{\"status\":\"ok\",\"database\":\"initialized\"}";
     });
-    
-    // Log endpoint - POST only
+
     CROW_ROUTE(app, "/log").methods(crow::HTTPMethod::Post)
     ([](const crow::request& req){
         std::cout << "\n[/log] ===== POST REQUEST RECEIVED =====" << std::endl;
         std::cout << "[/log] Content-Type: " << req.get_header_value("Content-Type") << std::endl;
-        
-        // Extract and validate API Key
+
         std::string api_key = req.get_header_value("X-API-Key");
         std::cout << "[/log] X-API-Key: " << (api_key.empty() ? "(not provided)" : api_key) << std::endl;
-        
-        // Rate limiting check
+
         if (!rate_limiter.allow_request(api_key)) {
             log_warn("RateLimit", "Rate limit exceeded for: " + api_key.substr(0, 12));
             crow::response resp(429, "{\"error\":\"Rate limit exceeded. Please slow down.\"}");
@@ -187,9 +171,8 @@ int main() {
             resp.add_header("Retry-After", "60");
             return resp;
         }
-        
-        // Get project ID from API key
-        int project_id = 1; // Default fallback
+
+        int project_id = 1; 
         if (!api_key.empty() && auth_db && auth_db->get_project_id_from_api_key(api_key, project_id)) {
             std::cout << "[/log] Validated: Project ID " << project_id << std::endl;
         } else {
@@ -205,8 +188,7 @@ int main() {
                 std::cerr << "[/log ERROR] Database not initialized" << std::endl;
                 return crow::response(500, "{\"error\":\"Database not initialized\"}");
             }
-            
-            // Manual parsing of URL-encoded POST body
+
             std::map<std::string, std::string> post_params;
             std::string body = req.body;
             std::istringstream body_stream(body);
@@ -217,8 +199,7 @@ int main() {
                     post_params[pair.substr(0, eq_pos)] = pair.substr(eq_pos + 1);
                 }
             }
-            
-            // Get parameters with defaults
+
             std::string func = post_params.count("func") ? post_params["func"] : "unknown";
             std::string msg = post_params.count("message") ? post_params["message"] : "Trace";
             std::string version = post_params.count("version") ? post_params["version"] : "v1.0.0";
@@ -244,8 +225,7 @@ int main() {
             std::cout << "[/log] Parsed params: func=" << func << ", msg=" << msg 
                       << ", version=" << version << ", duration=" << duration 
                       << ", ram=" << ram << std::endl;
-            
-            // Validate and sanitize inputs
+
             func = ExecTrace::sanitize_string(func, 128);
             msg = ExecTrace::sanitize_string(msg, 256);
             version = ExecTrace::sanitize_string(version, 32);
@@ -266,8 +246,7 @@ int main() {
             
             std::cout << "[/log] Validation passed" << std::endl;
             std::cout.flush();
-            
-            // Log to database with validated project_id
+
             int log_id = trace_db->log_event(project_id, func.c_str(), msg.c_str(), 
                                             version.c_str(), duration, ram);
             
@@ -292,14 +271,12 @@ int main() {
             return resp;
         }
     });
-    
-    // Register endpoint
+
     CROW_ROUTE(app, "/api/auth/register").methods(crow::HTTPMethod::Post)
     ([](const crow::request& req){
         std::cout << "\n[/api/auth/register] Request received" << std::endl;
         std::cout << "[DEBUG] Request body: " << req.body << std::endl;
-        
-        // Simple URL decode function
+
         auto url_decode = [](const std::string& str) -> std::string {
             std::string result;
             for (size_t i = 0; i < str.length(); i++) {
@@ -320,12 +297,10 @@ int main() {
             }
             return result;
         };
-        
-        // Manual parsing of URL-encoded form data
+
         std::string body = req.body;
         std::string email, password, username;
-        
-        // Parse email
+
         size_t email_pos = body.find("email=");
         if (email_pos != std::string::npos) {
             size_t email_end = body.find("&", email_pos);
@@ -333,8 +308,7 @@ int main() {
                 email_end == std::string::npos ? std::string::npos : email_end - email_pos - 6);
             email = url_decode(email_encoded);
         }
-        
-        // Parse password
+
         size_t pwd_pos = body.find("password=");
         if (pwd_pos != std::string::npos) {
             size_t pwd_end = body.find("&", pwd_pos);
@@ -342,8 +316,7 @@ int main() {
                 pwd_end == std::string::npos ? std::string::npos : pwd_end - pwd_pos - 9);
             password = url_decode(pwd_encoded);
         }
-        
-        // Parse username
+
         size_t user_pos = body.find("username=");
         if (user_pos != std::string::npos) {
             size_t user_end = body.find("&", user_pos);
@@ -374,14 +347,12 @@ int main() {
         resp.add_header("Content-Type", "application/json");
         return resp;
     });
-    
-    // Login endpoint
+
     CROW_ROUTE(app, "/api/auth/login").methods(crow::HTTPMethod::Post)
     ([](const crow::request& req){
         std::cout << "\n[/api/auth/login] Request received" << std::endl;
         std::cout << "[DEBUG] Request body: " << req.body << std::endl;
-        
-        // Simple URL decode function
+
         auto url_decode = [](const std::string& str) -> std::string {
             std::string result;
             for (size_t i = 0; i < str.length(); i++) {
@@ -402,12 +373,10 @@ int main() {
             }
             return result;
         };
-        
-        // Manual parsing of POST body
+
         std::string body = req.body;
         std::string email, password;
-        
-        // Parse email
+
         size_t email_pos = body.find("email=");
         if (email_pos != std::string::npos) {
             size_t email_end = body.find("&", email_pos);
@@ -415,8 +384,7 @@ int main() {
                 email_end == std::string::npos ? std::string::npos : email_end - email_pos - 6);
             email = url_decode(email_encoded);
         }
-        
-        // Parse password
+
         size_t pwd_pos = body.find("password=");
         if (pwd_pos != std::string::npos) {
             size_t pwd_end = body.find("&", pwd_pos);
@@ -430,7 +398,7 @@ int main() {
         
         ExecTrace::UserEntry user;
         if (auth_db->login_user(email, password, user)) {
-            // Include role in response
+            
             std::string json_resp = "{\"status\":\"ok\",\"user_id\":" + std::to_string(user.user_id) + 
                                    ",\"username\":\"" + std::string(user.username) + 
                                    "\",\"role\":" + std::to_string(user.role) + "}";
@@ -444,13 +412,11 @@ int main() {
         resp.add_header("Content-Type","application/json");
         return resp;
     });
-    
-    // Create project endpoint
+
     CROW_ROUTE(app, "/api/project/create").methods(crow::HTTPMethod::Post)
     ([](const crow::request& req){
         std::cout << "\n[/api/project/create] Request received" << std::endl;
-        
-        // Manual parsing of URL-encoded POST body (crow::query_string doesn't work with POST bodies)
+
         std::map<std::string, std::string> post_params;
         std::string body = req.body;
         std::istringstream body_stream(body);
@@ -481,16 +447,14 @@ int main() {
         resp.add_header("Content-Type", "application/json");
         return resp;
     });
-    
-    // Get user projects
+
     CROW_ROUTE(app, "/api/projects/<int>")
     ([](int user_id){
         std::cout << "\n[/api/projects] Getting projects for user " << user_id << std::endl;
         
         try {
             auto projects = auth_db->get_projects_by_user(user_id);
-            
-            // Build JSON array
+
             std::string json = "{\"status\":\"ok\",\"projects\":[";
             for (size_t i = 0; i < projects.size(); i++) {
                 if (i > 0) json += ",";
@@ -514,8 +478,7 @@ int main() {
             return resp;
         }
     });
-    
-    // Update project settings
+
     CROW_ROUTE(app, "/api/project/<int>/settings").methods(crow::HTTPMethod::Put)
     ([](const crow::request& req, int project_id){
         std::cout << "\n[/api/project/settings] Updating settings for project " << project_id << std::endl;
@@ -532,8 +495,7 @@ int main() {
             if (params.get("normal_threshold")) {
                 normal_threshold = std::stoi(params.get("normal_threshold"));
             }
-            
-            // Update settings in database
+
             if (auth_db->update_project_settings(project_id, fast_threshold, normal_threshold)) {
                 std::cout << "[Settings] Updated successfully" << std::endl;
             }
@@ -551,8 +513,7 @@ int main() {
             return resp;
         }
     });
-    
-    // Delete project
+
     CROW_ROUTE(app, "/api/project/<int>").methods(crow::HTTPMethod::Delete)
     ([](int project_id){
         std::cout << "\n[/api/project/delete] Deleting project " << project_id << std::endl;
@@ -576,15 +537,11 @@ int main() {
             return resp;
         }
     });
-    
-    // ========== ADMIN ENDPOINTS ==========
-    
-    // Get all users (Admin only)
+
     CROW_ROUTE(app, "/api/admin/users").methods(crow::HTTPMethod::Get)
     ([](const crow::request& req){
         std::cout << "\n[/api/admin/users] Get all users request" << std::endl;
-        
-        // Get user_id from query parameter
+
         auto params = crow::query_string(req.url_params);
         std::string user_id_str = params.get("admin_user_id") ? params.get("admin_user_id") : "";
         
@@ -595,8 +552,7 @@ int main() {
         }
         
         int admin_user_id = std::stoi(user_id_str);
-        
-        // Check if user is admin
+
         if (!auth_db->has_permission(admin_user_id, "manage_users")) {
             crow::response resp(403, "{\"error\":\"Admin access required\"}");
             resp.add_header("Content-Type", "application/json");
@@ -605,8 +561,7 @@ int main() {
         
         try {
             auto users = auth_db->get_all_users();
-            
-            // Build JSON array
+
             std::string json = "{\"status\":\"ok\",\"users\":[";
             for (size_t i = 0; i < users.size(); i++) {
                 if (i > 0) json += ",";
@@ -631,26 +586,22 @@ int main() {
             return resp;
         }
     });
-    
-    // Update user role (Admin only)
+
     CROW_ROUTE(app, "/api/admin/users/<int>/role").methods(crow::HTTPMethod::Put)
     ([](const crow::request& req, int target_user_id){
         std::cout << "\n[/api/admin/users/role] Update role for user " << target_user_id << std::endl;
         std::cout << "[DEBUG] Request body: " << req.body << std::endl;
-        
-        // Manual parsing of POST body
+
         std::string body = req.body;
         std::string admin_user_id_str, new_role_str;
-        
-        // Parse admin_user_id
+
         size_t admin_pos = body.find("admin_user_id=");
         if (admin_pos != std::string::npos) {
             size_t admin_end = body.find("&", admin_pos);
             admin_user_id_str = body.substr(admin_pos + 14, 
                 admin_end == std::string::npos ? std::string::npos : admin_end - admin_pos - 14);
         }
-        
-        // Parse role
+
         size_t role_pos = body.find("role=");
         if (role_pos != std::string::npos) {
             size_t role_end = body.find("&", role_pos);
@@ -669,15 +620,13 @@ int main() {
         
         int admin_user_id = std::stoi(admin_user_id_str);
         int new_role = std::stoi(new_role_str);
-        
-        // Validate role value
+
         if (new_role < 0 || new_role > 2) {
             crow::response resp(400, "{\"error\":\"Invalid role value. Must be 0 (User), 1 (Editor), or 2 (Admin)\"}");
             resp.add_header("Content-Type", "application/json");
             return resp;
         }
-        
-        // Check if requester is admin
+
         if (!auth_db->has_permission(admin_user_id, "assign_roles")) {
             crow::response resp(403, "{\"error\":\"Admin access required\"}");
             resp.add_header("Content-Type", "application/json");
@@ -705,8 +654,7 @@ int main() {
             return resp;
         }
     });
-    
-    // Deactivate user (Admin only)
+
     CROW_ROUTE(app, "/api/admin/users/<int>").methods(crow::HTTPMethod::Delete)
     ([](const crow::request& req, int target_user_id){
         std::cout << "\n[/api/admin/users/delete] Deactivate user " << target_user_id << std::endl;
@@ -721,8 +669,7 @@ int main() {
         }
         
         int admin_user_id = std::stoi(admin_user_id_str);
-        
-        // Check if requester is admin
+
         if (!auth_db->has_permission(admin_user_id, "manage_users")) {
             crow::response resp(403, "{\"error\":\"Admin access required\"}");
             resp.add_header("Content-Type", "application/json");
@@ -746,8 +693,7 @@ int main() {
             return resp;
         }
     });
-    
-    // Advanced query endpoint for dashboard
+
     CROW_ROUTE(app, "/query/advanced")
     ([](const crow::request& req){
         std::cout << "\n[/query/advanced] Advanced query request" << std::endl;
@@ -756,8 +702,7 @@ int main() {
         int limit = params.get("limit") ? std::stoi(params.get("limit")) : 50;
         std::string sort_by = params.get("sort_by") ? params.get("sort_by") : "duration";
         std::string sort_order = params.get("sort_order") ? params.get("sort_order") : "desc";
-        
-        // Get API key from header for per-project filtering
+
         std::string api_key = req.get_header_value("X-API-Key");
         int project_id = -1;
         
@@ -773,8 +718,7 @@ int main() {
         
         std::cout << "[Query] Limit: " << limit << ", Sort by: " << sort_by << " (" << sort_order << ")" << std::endl;
         std::cout << "[Query] Found " << results.size() << " traces" << std::endl;
-        
-        // Sort results based on parameters
+
         std::sort(results.begin(), results.end(), [&](const ExecTrace::TraceEntry& a, const ExecTrace::TraceEntry& b) {
             bool result = false;
             
@@ -785,14 +729,12 @@ int main() {
             } else if (sort_by == "func") {
                 result = std::string(a.func) < std::string(b.func);
             } else {
-                result = a.duration < b.duration; // Default to duration
+                result = a.duration < b.duration; 
             }
-            
-            // Reverse for descending order
+
             return sort_order == "desc" ? !result : result;
         });
-        
-        // Build JSON array
+
         std::string json = "[";
         for (size_t i = 0; i < results.size() && i < (size_t)limit; i++) {
             if (i > 0) json += ",";
@@ -811,16 +753,14 @@ int main() {
         resp.add_header("Access-Control-Allow-Origin", "*");
         return resp;
     });
-    
-    // Get project info from API key
+
     CROW_ROUTE(app, "/api/project/info")
     ([](const crow::request& req){
         std::cout << "\n[/api/project/info] Validating API key" << std::endl;
         
         std::string api_key = req.get_header_value("X-API-Key");
         std::cout << "[Info] API Key: " << api_key << std::endl;
-        
-        // Accept any API key for now
+
         std::string json = "{\"id\":1,\"name\":\"Demo Project\",\"api_key\":\"" + api_key + "\"}";
         
         crow::response resp(200, json);
@@ -828,8 +768,7 @@ int main() {
         resp.add_header("Access-Control-Allow-Origin", "*");
         return resp;
     });
-    
-    // Get project settings
+
     CROW_ROUTE(app, "/api/projects/<int>/settings")
     ([](int project_id){
         std::cout << "\n[/api/projects/settings] Project " << project_id << std::endl;
@@ -841,8 +780,7 @@ int main() {
         resp.add_header("Access-Control-Allow-Origin", "*");
         return resp;
     });
-    
-    // Query endpoint - GET logs by project
+
     CROW_ROUTE(app, "/logs/<int>")
     ([](int project_id){
         std::cout << "\n[/logs] ===== GET REQUEST FOR PROJECT " << project_id << " =====" << std::endl;
@@ -858,8 +796,7 @@ int main() {
             auto results = trace_db->search_by_project(project_id);
             
             std::cout << "[/logs] Found " << results.size() << " entries" << std::endl;
-            
-            // Build JSON response manually
+
             std::string json = "{\"status\":\"ok\",\"count\":" + std::to_string(results.size()) + ",\"logs\":[";
             
             for (size_t i = 0; i < results.size(); i++) {
@@ -893,8 +830,7 @@ int main() {
             return resp;
         }
     });
-    
-    // Debug: List all registered routes
+
     std::cout << "\n[Server] Routes registered successfully:" << std::endl;
     std::cout << "  GET  /" << std::endl;
     std::cout << "  GET  /health" << std::endl;
@@ -910,8 +846,7 @@ int main() {
     std::cout << "  curl -X POST http://localhost:8080/log -d 'func=test&msg=hello&duration=100&ram=1024'" << std::endl;
     std::cout << "  curl http://localhost:8080/logs/1" << std::endl;
     std::cout << std::endl;
-    
-    // Stats/Aggregation Endpoint
+
     CROW_ROUTE(app, "/api/stats/<int>")
     ([](const crow::request& req, int project_id){
         try {
@@ -955,10 +890,9 @@ int main() {
     });
     
     log_info("Server", "Starting on port 8080...");
-    // Start server - single threaded for easier debugging
-    app.port(8080).run();
     
-    // Cleanup
+    app.port(8080).run();
+
     if (trace_db) {
         delete trace_db;
     }

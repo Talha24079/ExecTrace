@@ -56,7 +56,6 @@ public:
         memcpy(&count, buffer + offset, sizeof(int));
         offset += sizeof(int);
 
-        // CRITICAL FIX 1: Safety check for garbage data
         if (count < 0 || count > MAX_KEYS) {
             count = 0;
         }
@@ -91,11 +90,9 @@ public:
                 children.clear();
             }
         }
-        
-        // CRITICAL FIX 2: Consistency Check
+
         if (!is_leaf && children.empty()) {
-            // If it claims to be non-leaf but has no children, it's invalid/empty.
-            // Treat as leaf to prevent segfault in insert_non_full.
+
             is_leaf = true;
         }
     }
@@ -111,8 +108,7 @@ public:
     BTree(DiskManager* disk_manager) : dm(disk_manager), root_page_id(0) {
         char buffer[PAGE_SIZE];
         dm->read_page(0, buffer);
-        
-        // CRITICAL FIX 3: Check if page is zeroed/empty
+
         bool is_empty = true;
         for(int i = 0; i < 10; i++) {
             if(buffer[i] != 0) {
@@ -122,7 +118,7 @@ public:
         }
 
         if (is_empty) {
-            // Initialize root as empty leaf node
+            
             Node<T> root(0, true);
             root.serialize(buffer);
             dm->write_page(0, buffer);
@@ -136,7 +132,7 @@ public:
         Node<T> root = load_node(root_page_id);
         
         if (root.entries.size() == Node<T>::MAX_KEYS) {
-            // Root is full, need to split
+            
             int new_root_id = dm->allocate_page();
             Node<T> new_root(new_root_id, false);
             new_root.children.push_back(root_page_id);
@@ -172,12 +168,12 @@ private:
 
     void insert_non_full(Node<T>& node, const T& entry) {
         if (node.is_leaf) {
-            // Insert into leaf node
+            
             node.entries.push_back(entry);
             std::sort(node.entries.begin(), node.entries.end());
             save_node(node);
         } else {
-            // Find child to insert into
+            
             int i = node.entries.size() - 1;
             while (i >= 0 && entry < node.entries[i]) {
                 i--;
@@ -204,8 +200,7 @@ private:
         Node<T> new_node(new_page_id, child.is_leaf);
 
         int mid = Node<T>::DEGREE - 1;
-        
-        // Move half of entries to new node
+
         new_node.entries.insert(new_node.entries.begin(), 
                                 child.entries.begin() + mid + 1, 
                                 child.entries.end());
@@ -219,8 +214,7 @@ private:
         
         T mid_entry = child.entries[mid];
         child.entries.erase(child.entries.begin() + mid, child.entries.end());
-        
-        // Insert mid entry into parent
+
         parent.entries.insert(parent.entries.begin() + index, mid_entry);
         parent.children.insert(parent.children.begin() + index + 1, new_page_id);
         
@@ -250,7 +244,7 @@ private:
     }
     
 public:
-    // Get all values from the tree (inorder traversal)
+    
     std::vector<T> get_all_values() {
         std::vector<T> result;
         collect_all_values(root_page_id, result);
@@ -258,26 +252,26 @@ public:
     }
 
 private:
-    // Helper to recursively collect all values
+    
     void collect_all_values(int page_id, std::vector<T>& result) {
         Node<T> node = load_node(page_id);
         
         if (node.is_leaf) {
-            // Leaf node: add all entries
+            
             for (const auto& entry : node.entries) {
                 result.push_back(entry);
             }
         } else {
-            // Internal node: traverse children and collect entries
+            
             for (size_t i = 0; i < node.entries.size(); i++) {
-                // Visit left child
+                
                 if (i < node.children.size()) {
                     collect_all_values(node.children[i], result);
                 }
-                // Add current entry
+                
                 result.push_back(node.entries[i]);
             }
-            // Visit rightmost child
+            
             if (!node.children.empty() && node.children.size() > node.entries.size()) {
                 collect_all_values(node.children[node.children.size() - 1], result);
             }

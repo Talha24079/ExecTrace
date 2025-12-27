@@ -43,8 +43,7 @@ public:
     std::vector<ExecTrace::TraceEntry> search_by_project(int project_id) {
         std::lock_guard<std::mutex> lock(db_mutex);
         std::cout << "[ExecTraceDB] Searching traces for project " << project_id << std::endl;
-        
-        // Get all traces and filter by project_id
+
         auto all_traces = trace_tree->get_all_values();
         std::vector<ExecTrace::TraceEntry> filtered;
         
@@ -58,16 +57,13 @@ public:
         return filtered;
     }
 
-    // Get all traces (for demo/testing)
     std::vector<ExecTrace::TraceEntry> get_all_traces() {
         std::lock_guard<std::mutex> lock(db_mutex);
         std::cout << "[ExecTraceDB] get_all_traces called" << std::endl;
-        
-        // Use B-Tree traversal to get all entries
+
         auto all_entries = trace_tree->get_all_values();
         std::cout << "[ExecTraceDB] Found " << all_entries.size() << " total entries" << std::endl;
-        
-        // Filter invalid and deleted entries
+
         std::vector<ExecTrace::TraceEntry> valid;
         for (const auto& entry : all_entries) {
             if (entry.is_valid()) {
