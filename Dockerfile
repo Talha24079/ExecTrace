@@ -12,10 +12,6 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /app
 COPY backend /app/backend
 COPY frontend /app/frontend
-COPY docker-entrypoint.sh /app/docker-entrypoint.sh
-
-# Make entrypoint executable
-RUN chmod +x /app/docker-entrypoint.sh
 
 # Build server
 RUN cd backend && \
@@ -26,5 +22,4 @@ RUN cd backend && \
     -pthread -lboost_system
 
 EXPOSE 8080
-ENTRYPOINT ["/app/docker-entrypoint.sh"]
 CMD ["./backend/et-server"]
