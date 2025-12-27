@@ -519,7 +519,9 @@ int main() {
         std::cout << "\n[/api/project/delete] Deleting project " << project_id << std::endl;
         
         try {
-            if (auth_db->delete_project(project_id)) {
+            bool result = auth_db->delete_project(project_id);
+            if (result) {
+                std::cout << "[Server] Successfully deleted project " << project_id << std::endl;
                 std::string json = "{\"status\":\"ok\",\"message\":\"Project deleted\"}";
                 
                 crow::response resp(200, json);
@@ -527,11 +529,13 @@ int main() {
                 resp.add_header("Access-Control-Allow-Origin", "*");
                 return resp;
             } else {
+                std::cout << "[Server] Failed to delete project " << project_id << " (AuthDB returned false)" << std::endl;
                 crow::response resp(404, "{\"error\":\"Project not found\"}");
                 resp.add_header("Content-Type", "application/json");
                 return resp;
             }
         } catch (const std::exception& e) {
+            std::cout << "[Server] Exception during delete: " << e.what() << std::endl;
             crow::response resp(500, "{\"error\":\"Server error\"}");
             resp.add_header("Content-Type", "application/json");
             return resp;
